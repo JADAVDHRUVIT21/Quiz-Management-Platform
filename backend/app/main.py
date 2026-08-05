@@ -3,9 +3,10 @@ from sqlalchemy import text
 
 from app.core.config import DATABASE_URL
 from app.db.database import engine
-from app.api.v1.endpoints.auth import router as auth_router
 
-# Debug
+from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.quiz import router as quiz_router
+
 print("=" * 60)
 print("DATABASE_URL =", DATABASE_URL)
 print("=" * 60)
@@ -16,6 +17,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(quiz_router, prefix="/api/v1")
 
 
 @app.get("/")
@@ -30,10 +32,12 @@ def health_check():
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
+
         return {
             "status": "success",
             "database": "Connected"
         }
+
     except Exception as e:
         return {
             "status": "error",
