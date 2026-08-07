@@ -5,8 +5,7 @@ from alembic import context
 
 from app.core.config import DATABASE_URL
 from app.db.database import Base
-from app.models.user import User
-from app.models.quiz import Quiz
+from app.models import User, Quiz, Question
 
 config = context.config
 

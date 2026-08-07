@@ -6,7 +6,10 @@ from app.db.database import engine
 
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.quiz import router as quiz_router
+from app.api.v1.endpoints.question import router as question_router
+from app.api.v1.endpoints.quiz_attempt import router as quiz_attempt_router
 
+# Debug
 print("=" * 60)
 print("DATABASE_URL =", DATABASE_URL)
 print("=" * 60)
@@ -16,8 +19,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Register Routers
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(quiz_router, prefix="/api/v1")
+app.include_router(question_router, prefix="/api/v1")
+app.include_router(quiz_attempt_router, prefix="/api/v1")
 
 
 @app.get("/")
