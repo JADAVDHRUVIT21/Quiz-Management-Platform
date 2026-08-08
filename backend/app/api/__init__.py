@@ -1,0 +1,1 @@
+from app.api.certificate import router as certificate_router
