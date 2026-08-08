@@ -9,8 +9,10 @@ from app.crud.quiz import (
     create_quiz,
     get_all_quizzes,
     get_quiz_by_id,
-    update_quiz
+    update_quiz,
+    delete_quiz
 )
+
 
 router = APIRouter(
     prefix="/quizzes",
@@ -27,7 +29,10 @@ def add_quiz(
     return create_quiz(db, quiz)
 
 
-@router.get("/", response_model=list[QuizResponse])
+@router.get(
+    "/",
+    response_model=list[QuizResponse]
+)
 def list_quizzes(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -35,14 +40,20 @@ def list_quizzes(
     return get_all_quizzes(db)
 
 
-@router.put("/{quiz_id}", response_model=QuizResponse)
+@router.put(
+    "/{quiz_id}",
+    response_model=QuizResponse
+)
 def edit_quiz(
     quiz_id: int,
     quiz: QuizCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin)
 ):
-    existing_quiz = get_quiz_by_id(db, quiz_id)
+    existing_quiz = get_quiz_by_id(
+        db,
+        quiz_id
+    )
 
     if not existing_quiz:
         raise HTTPException(
@@ -50,4 +61,35 @@ def edit_quiz(
             detail="Quiz not found"
         )
 
-    return update_quiz(db, quiz_id, quiz)
+    return update_quiz(
+        db,
+        quiz_id,
+        quiz
+    )
+
+
+@router.delete("/{quiz_id}")
+def remove_quiz(
+    quiz_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    existing_quiz = get_quiz_by_id(
+        db,
+        quiz_id
+    )
+
+    if not existing_quiz:
+        raise HTTPException(
+            status_code=404,
+            detail="Quiz not found"
+        )
+
+    delete_quiz(
+        db,
+        quiz_id
+    )
+
+    return {
+        "message": "Quiz deleted successfully"
+    }

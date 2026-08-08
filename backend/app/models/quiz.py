@@ -35,7 +35,6 @@ class Quiz(Base):
         default=0
     )
 
-    # Minimum percentage required to pass the quiz
     passing_percentage = Column(
         Integer,
         nullable=False,
@@ -63,3 +62,4 @@ class Quiz(Base):
         back_populates="quiz",
         cascade="all, delete"
     )
+

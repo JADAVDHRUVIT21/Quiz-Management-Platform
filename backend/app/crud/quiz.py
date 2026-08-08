@@ -25,7 +25,11 @@ def get_all_quizzes(db: Session):
 
 
 def get_quiz_by_id(db: Session, quiz_id: int):
-    return db.query(Quiz).filter(Quiz.id == quiz_id).first()
+    return (
+        db.query(Quiz)
+        .filter(Quiz.id == quiz_id)
+        .first()
+    )
 
 
 def update_quiz(
@@ -46,5 +50,22 @@ def update_quiz(
 
     db.commit()
     db.refresh(db_quiz)
+
+    return db_quiz
+
+def delete_quiz(
+    db: Session,
+    quiz_id: int
+):
+    db_quiz = get_quiz_by_id(
+        db,
+        quiz_id
+    )
+
+    if not db_quiz:
+        return None
+
+    db.delete(db_quiz)
+    db.commit()
 
     return db_quiz
