@@ -36,8 +36,13 @@ def create_question(
     return db_question
 
 
-def get_all_questions(db: Session):
-    return db.query(Question).all()
+def get_all_questions(
+    db: Session
+):
+    return (
+        db.query(Question)
+        .all()
+    )
 
 
 def get_questions_by_quiz(

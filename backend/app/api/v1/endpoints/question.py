@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_current_admin
 from app.db.database import get_db
 from app.models.user import User
-from app.schemas.question import QuestionCreate, QuestionResponse
+from app.schemas.question import (
+    QuestionCreate,
+    QuestionResponse,
+    QuestionStudentResponse
+)
 from app.crud.question import (
     create_question,
     get_questions_by_quiz,
@@ -20,13 +24,19 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=QuestionResponse)
+@router.post(
+    "/",
+    response_model=QuestionResponse
+)
 def add_question(
     question: QuestionCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin)
 ):
-    result = create_question(db, question)
+    result = create_question(
+        db,
+        question
+    )
 
     if not result:
         raise HTTPException(
@@ -39,14 +49,17 @@ def add_question(
 
 @router.get(
     "/quiz/{quiz_id}",
-    response_model=list[QuestionResponse]
+    response_model=list[QuestionStudentResponse]
 )
 def list_questions(
     quiz_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return get_questions_by_quiz(db, quiz_id)
+    return get_questions_by_quiz(
+        db,
+        quiz_id
+    )
 
 
 @router.put(
@@ -85,7 +98,9 @@ def edit_question(
     return result
 
 
-@router.delete("/{question_id}")
+@router.delete(
+    "/{question_id}"
+)
 def remove_question(
     question_id: int,
     db: Session = Depends(get_db),

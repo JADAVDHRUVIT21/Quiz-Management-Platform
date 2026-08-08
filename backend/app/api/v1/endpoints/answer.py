@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.models.user import User
-from app.schemas.answer import AnswerCreate, AnswerResponse
+from app.schemas.answer import (
+    AnswerCreate,
+    AnswerResponse
+)
 from app.crud.answer import create_answer
 
 
@@ -14,21 +17,26 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=AnswerResponse)
+@router.post(
+    "/",
+    response_model=AnswerResponse
+)
 def submit_answer(
     answer: AnswerCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user)
 ):
-    result = create_answer(db, answer)
+    result = create_answer(
+        db,
+        answer
+    )
 
     if result is None:
         raise HTTPException(
-            status_code=404,
-            detail="Question or quiz attempt not found"
+            status_code=400,
+            detail="Invalid question, attempt, or answer"
         )
 
-    # Make sure the attempt belongs to the logged-in user
     if result.attempt.user_id != current_user.id:
         raise HTTPException(
             status_code=403,

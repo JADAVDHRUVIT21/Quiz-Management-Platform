@@ -10,31 +10,40 @@ def create_answer(
     db: Session,
     answer: AnswerCreate
 ):
-    # Find question
     question = (
         db.query(Question)
-        .filter(Question.id == answer.question_id)
+        .filter(
+            Question.id == answer.question_id
+        )
         .first()
     )
 
     if not question:
         return None
 
-    # Find attempt
     attempt = (
         db.query(QuizAttempt)
-        .filter(QuizAttempt.id == answer.attempt_id)
+        .filter(
+            QuizAttempt.id == answer.attempt_id
+        )
         .first()
     )
 
     if not attempt:
         return None
 
-    # Make sure the question belongs to the same quiz
     if question.quiz_id != attempt.quiz_id:
         return None
 
-    # Check if question was already answered
+    selected_answer = (
+        answer.selected_answer
+        .strip()
+        .upper()
+    )
+
+    if selected_answer not in {"A", "B", "C", "D"}:
+        return None
+
     existing_answer = (
         db.query(Answer)
         .filter(
@@ -45,12 +54,13 @@ def create_answer(
     )
 
     if existing_answer:
+        existing_answer.selected_answer = selected_answer
+
+        db.commit()
+        db.refresh(existing_answer)
+
         return existing_answer
 
-    # Normalize selected answer
-    selected_answer = answer.selected_answer.strip().upper()
-
-    # Create answer
     db_answer = Answer(
         attempt_id=answer.attempt_id,
         question_id=answer.question_id,
@@ -58,10 +68,6 @@ def create_answer(
     )
 
     db.add(db_answer)
-
-    # Add marks if correct
-    if selected_answer == question.correct_answer.strip().upper():
-        attempt.score = (attempt.score or 0) + question.marks
 
     db.commit()
     db.refresh(db_answer)

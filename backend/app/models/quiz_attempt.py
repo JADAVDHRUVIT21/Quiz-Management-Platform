@@ -8,7 +8,11 @@ from app.db.database import Base
 class QuizAttempt(Base):
     __tablename__ = "quiz_attempts"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
     user_id = Column(
         Integer,
@@ -22,7 +26,11 @@ class QuizAttempt(Base):
         nullable=False
     )
 
-    score = Column(Integer, default=0)
+    score = Column(
+        Integer,
+        default=0,
+        nullable=False
+    )
 
     created_at = Column(
         DateTime(timezone=True),
@@ -38,8 +46,9 @@ class QuizAttempt(Base):
         "Quiz",
         back_populates="quiz_attempts"
     )
+
     answers = relationship(
-    "Answer",
-    back_populates="attempt",
-    cascade="all, delete"
+        "Answer",
+        back_populates="attempt",
+        cascade="all, delete"
     )

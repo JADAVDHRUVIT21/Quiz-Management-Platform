@@ -1,4 +1,10 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    DateTime
+)
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -8,17 +14,27 @@ from app.db.database import Base
 class Answer(Base):
     __tablename__ = "answers"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
 
     attempt_id = Column(
         Integer,
-        ForeignKey("quiz_attempts.id", ondelete="CASCADE"),
+        ForeignKey(
+            "quiz_attempts.id",
+            ondelete="CASCADE"
+        ),
         nullable=False
     )
 
     question_id = Column(
         Integer,
-        ForeignKey("questions.id", ondelete="CASCADE"),
+        ForeignKey(
+            "questions.id",
+            ondelete="CASCADE"
+        ),
         nullable=False
     )
 

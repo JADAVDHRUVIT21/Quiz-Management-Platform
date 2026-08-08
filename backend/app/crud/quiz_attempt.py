@@ -12,7 +12,6 @@ def create_quiz_attempt(
     user_id: int,
     quiz_attempt: QuizAttemptCreate
 ):
-    # Check that the quiz exists
     quiz = (
         db.query(Quiz)
         .filter(Quiz.id == quiz_attempt.quiz_id)
@@ -41,17 +40,21 @@ def get_my_attempts(
 ):
     return (
         db.query(QuizAttempt)
-        .filter(QuizAttempt.user_id == user_id)
+        .filter(
+            QuizAttempt.user_id == user_id
+        )
+        .order_by(
+            QuizAttempt.created_at.desc()
+        )
         .all()
     )
 
 
-def get_quiz_result(
+def submit_quiz_attempt(
     db: Session,
     attempt_id: int,
     user_id: int
 ):
-    # Find the attempt belonging to the logged-in user
     attempt = (
         db.query(QuizAttempt)
         .filter(
@@ -64,72 +67,221 @@ def get_quiz_result(
     if not attempt:
         return None
 
-    # Find quiz
     quiz = (
         db.query(Quiz)
-        .filter(Quiz.id == attempt.quiz_id)
+        .filter(
+            Quiz.id == attempt.quiz_id
+        )
         .first()
     )
 
     if not quiz:
         return None
 
-    # Get all questions for this quiz
     questions = (
         db.query(Question)
-        .filter(Question.quiz_id == attempt.quiz_id)
+        .filter(
+            Question.quiz_id == attempt.quiz_id
+        )
         .all()
     )
 
-    # Get answers submitted for this attempt
     answers = (
         db.query(Answer)
-        .filter(Answer.attempt_id == attempt.id)
+        .filter(
+            Answer.attempt_id == attempt.id
+        )
         .all()
     )
 
-    # Calculate correct answers
-    correct_answers = 0
-
-    for answer in answers:
-        question = next(
-            (
-                q for q in questions
-                if q.id == answer.question_id
-            ),
-            None
-        )
-
-        if question:
-            if (
-                answer.selected_answer.strip().upper()
-                == question.correct_answer.strip().upper()
-            ):
-                correct_answers += 1
+    answer_map = {
+        answer.question_id: answer
+        for answer in answers
+    }
 
     total_questions = len(questions)
 
-    # Total marks of the quiz
     total_marks = sum(
-        question.marks for question in questions
+        question.marks
+        for question in questions
     )
 
-    # Calculate percentage
+    correct_answers = 0
+    incorrect_answers = 0
+    unanswered = 0
+    score = 0
+
+    for question in questions:
+        answer = answer_map.get(question.id)
+
+        if not answer:
+            unanswered += 1
+            continue
+
+        selected_answer = (
+            answer.selected_answer or ""
+        ).strip().upper()
+
+        correct_answer = (
+            question.correct_answer or ""
+        ).strip().upper()
+
+        if not selected_answer:
+            unanswered += 1
+
+        elif selected_answer == correct_answer:
+            correct_answers += 1
+            score += question.marks
+
+        else:
+            incorrect_answers += 1
+
+    attempt.score = score
+
+    db.commit()
+    db.refresh(attempt)
+
     if total_marks > 0:
-        percentage = (attempt.score / total_marks) * 100
+        percentage = (
+            score / total_marks
+        ) * 100
     else:
         percentage = 0
 
-    # Pass if percentage is 40% or more
-    result = "PASS" if percentage >= 40 else "FAIL"
+    result = (
+        "PASS"
+        if percentage >= quiz.passing_percentage
+        else "FAIL"
+    )
 
     return {
         "attempt_id": attempt.id,
         "quiz_id": attempt.quiz_id,
         "quiz_title": quiz.title,
-        "score": attempt.score,
+        "score": score,
         "total_marks": total_marks,
         "correct_answers": correct_answers,
+        "incorrect_answers": incorrect_answers,
+        "unanswered": unanswered,
+        "total_questions": total_questions,
+        "percentage": round(percentage, 2),
+        "result": result
+    }
+
+
+def get_quiz_result(
+    db: Session,
+    attempt_id: int,
+    user_id: int
+):
+    attempt = (
+        db.query(QuizAttempt)
+        .filter(
+            QuizAttempt.id == attempt_id,
+            QuizAttempt.user_id == user_id
+        )
+        .first()
+    )
+
+    if not attempt:
+        return None
+
+    quiz = (
+        db.query(Quiz)
+        .filter(
+            Quiz.id == attempt.quiz_id
+        )
+        .first()
+    )
+
+    if not quiz:
+        return None
+
+    questions = (
+        db.query(Question)
+        .filter(
+            Question.quiz_id == attempt.quiz_id
+        )
+        .all()
+    )
+
+    answers = (
+        db.query(Answer)
+        .filter(
+            Answer.attempt_id == attempt.id
+        )
+        .all()
+    )
+
+    answer_map = {
+        answer.question_id: answer
+        for answer in answers
+    }
+
+    total_questions = len(questions)
+
+    total_marks = sum(
+        question.marks
+        for question in questions
+    )
+
+    correct_answers = 0
+    incorrect_answers = 0
+    unanswered = 0
+    score = 0
+
+    for question in questions:
+        answer = answer_map.get(question.id)
+
+        if not answer:
+            unanswered += 1
+            continue
+
+        selected_answer = (
+            answer.selected_answer or ""
+        ).strip().upper()
+
+        correct_answer = (
+            question.correct_answer or ""
+        ).strip().upper()
+
+        if not selected_answer:
+            unanswered += 1
+
+        elif selected_answer == correct_answer:
+            correct_answers += 1
+            score += question.marks
+
+        else:
+            incorrect_answers += 1
+
+    attempt.score = score
+
+    db.commit()
+    db.refresh(attempt)
+
+    if total_marks > 0:
+        percentage = (
+            score / total_marks
+        ) * 100
+    else:
+        percentage = 0
+
+    result = (
+        "PASS"
+        if percentage >= quiz.passing_percentage
+        else "FAIL"
+    )
+
+    return {
+        "attempt_id": attempt.id,
+        "quiz_id": attempt.quiz_id,
+        "quiz_title": quiz.title,
+        "score": score,
+        "total_marks": total_marks,
+        "correct_answers": correct_answers,
+        "incorrect_answers": incorrect_answers,
+        "unanswered": unanswered,
         "total_questions": total_questions,
         "percentage": round(percentage, 2),
         "result": result

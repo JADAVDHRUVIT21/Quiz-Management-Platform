@@ -1,17 +1,17 @@
+from io import BytesIO
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.db.database import get_db
-from app.models.user import User
-from app.models.quiz_attempt import QuizAttempt
-from app.utils.security import get_current_user
-
 from reportlab.pdfgen import canvas
 from pypdf import PdfReader, PdfWriter
 
-from io import BytesIO
-from pathlib import Path
+from app.api.deps import get_current_user
+from app.db.database import get_db
+from app.models.user import User
+from app.models.quiz_attempt import QuizAttempt
 
 
 router = APIRouter(
@@ -131,7 +131,7 @@ def download_certificate(
     if not template_path.exists():
         raise HTTPException(
             status_code=500,
-            detail=f"Certificate template not found: {template_path}"
+            detail="Certificate template not found."
         )
 
     template_reader = PdfReader(

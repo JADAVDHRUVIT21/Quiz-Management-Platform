@@ -1,9 +1,10 @@
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
 class QuizAttemptCreate(BaseModel):
-    quiz_id: int
+    quiz_id: int = Field(gt=0)
 
 
 class QuizAttemptResponse(BaseModel):
@@ -24,6 +25,8 @@ class QuizResultResponse(BaseModel):
     score: int
     total_marks: int
     correct_answers: int
+    incorrect_answers: int
+    unanswered: int
     total_questions: int
     percentage: float
     result: str

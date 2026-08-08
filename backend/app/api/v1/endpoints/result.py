@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.models.user import User
-from app.models.quiz_attempt import QuizAttempt
+from app.crud.quiz_attempt import get_quiz_result
+from app.schemas.quiz_attempt import QuizResultResponse
+
 
 router = APIRouter(
     prefix="/results",
@@ -12,31 +14,25 @@ router = APIRouter(
 )
 
 
-@router.get("/{attempt_id}")
-def get_quiz_result(
+@router.get(
+    "/{attempt_id}",
+    response_model=QuizResultResponse
+)
+def get_result(
     attempt_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user)
 ):
-    attempt = (
-        db.query(QuizAttempt)
-        .filter(
-            QuizAttempt.id == attempt_id,
-            QuizAttempt.user_id == current_user.id
-        )
-        .first()
+    result = get_quiz_result(
+        db,
+        attempt_id,
+        current_user.id
     )
 
-    if not attempt:
+    if not result:
         raise HTTPException(
             status_code=404,
-            detail="Quiz attempt not found"
+            detail="Quiz result not found"
         )
 
-    return {
-        "attempt_id": attempt.id,
-        "quiz_id": attempt.quiz_id,
-        "user_id": attempt.user_id,
-        "score": attempt.score,
-        "created_at": attempt.created_at
-    }
+    return result
