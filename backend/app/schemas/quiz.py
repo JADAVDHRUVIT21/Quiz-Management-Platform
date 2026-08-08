@@ -8,6 +8,7 @@ class QuizCreate(BaseModel):
     description: Optional[str] = None
     duration: int
     total_marks: int
+    passing_percentage: int = 50
 
 
 class QuizResponse(BaseModel):
@@ -16,6 +17,7 @@ class QuizResponse(BaseModel):
     description: Optional[str]
     duration: int
     total_marks: int
+    passing_percentage: int
     is_active: bool
     created_at: datetime
 

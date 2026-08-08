@@ -15,3 +15,15 @@ class QuizAttemptResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class QuizResultResponse(BaseModel):
+    attempt_id: int
+    quiz_id: int
+    quiz_title: str
+    score: int
+    total_marks: int
+    correct_answers: int
+    total_questions: int
+    percentage: float
+    result: str
