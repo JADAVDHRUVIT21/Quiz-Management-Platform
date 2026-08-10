@@ -114,6 +114,7 @@ function Dashboard() {
               title="Manage Questions"
               description="Add, edit and remove questions from quizzes."
               button="Manage Questions"
+              primary
               onClick={() => navigate("/admin/questions")}
             />
 
@@ -122,6 +123,7 @@ function Dashboard() {
               title="Students"
               description="View and manage registered students."
               button="View Students"
+              primary
               onClick={() => navigate("/admin/students")}
             />
 
@@ -130,6 +132,7 @@ function Dashboard() {
               title="Quiz Results"
               description="Monitor student attempts and quiz performance."
               button="View Results"
+              primary
               onClick={() => navigate("/admin/results")}
             />
 
@@ -147,6 +150,7 @@ function Dashboard() {
               title="Admin Settings"
               description="Manage your administrator account and platform settings."
               button="Settings"
+              primary
               onClick={() => navigate("/admin/settings")}
             />
           </div>
