@@ -1,16 +1,10 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useNavigate,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, } from "react-router-dom";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Quiz from "./pages/Quiz";
 import QuizList from "./pages/QuizList";
-import QuizResult from "./pages/QuizResult";
+import QuizResult from "./pages/admin/QuizResult";
 import Results from "./pages/Result";
 import Certificate from "./pages/Certificate";
 
@@ -19,6 +13,10 @@ import ManageQuestions from "./pages/admin/ManageQuestions";
 import ManageQuizzes from "./pages/admin/ManageQuizzes";
 import Students from "./pages/admin/Students";
 import StudentDetails from "./pages/admin/StudentDetails";
+import QuizResults from "./pages/admin/QuizResult";
+import AdminSettings from "./pages/admin/AdminSettings";
+import quizResult from "./pages/admin/QuizResult";
+import StudentSettings from "./pages/StudentSettings";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -45,9 +43,13 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+
+      {/* NAVBAR */}
       <nav className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+
           <div className="flex min-w-0 items-center gap-3">
+
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white">
               Q
             </div>
@@ -61,10 +63,13 @@ function Dashboard() {
                 Quiz Management Platform
               </p>
             </div>
+
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-5">
+
             <div className="hidden text-right sm:block">
+
               <p className="text-sm font-semibold text-slate-900">
                 {user.full_name || "User"}
               </p>
@@ -72,6 +77,7 @@ function Dashboard() {
               <p className="text-xs capitalize text-slate-500">
                 {role || "student"}
               </p>
+
             </div>
 
             <button
@@ -81,14 +87,22 @@ function Dashboard() {
             >
               Logout
             </button>
+
           </div>
+
         </div>
       </nav>
 
+
+      {/* DASHBOARD CONTENT */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+
         <div className="mb-8 sm:mb-10">
+
           <div className="mb-4 inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600">
-            {isAdmin ? "Admin Dashboard" : "Student Dashboard"}
+            {isAdmin
+              ? "Admin Dashboard"
+              : "Student Dashboard"}
           </div>
 
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -98,16 +112,23 @@ function Dashboard() {
           <p className="mt-3 text-base text-slate-500 sm:text-lg">
             Hello, {user.full_name || "User"}
           </p>
+
         </div>
 
+
+        {/* ADMIN DASHBOARD */}
         {isAdmin ? (
+
           <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+
             <DashboardCard
               icon="📊"
               title="Manage Quizzes"
               description="Create, update and delete quizzes."
               button="Manage Quizzes"
-              onClick={() => navigate("/admin/quizzes")}
+              onClick={() =>
+                navigate("/admin/quizzes")
+              }
             />
 
             <DashboardCard
@@ -115,7 +136,9 @@ function Dashboard() {
               title="Manage Questions"
               description="Add, edit and remove questions from quizzes."
               button="Manage Questions"
-              onClick={() => navigate("/admin/questions")}
+              onClick={() =>
+                navigate("/admin/questions")
+              }
             />
 
             <DashboardCard
@@ -123,7 +146,9 @@ function Dashboard() {
               title="Students"
               description="View and manage registered students."
               button="View Students"
-              onClick={() => navigate("/admin/students")}
+              onClick={() =>
+                navigate("/admin/students")
+              }
             />
 
             <DashboardCard
@@ -131,7 +156,9 @@ function Dashboard() {
               title="Quiz Results"
               description="Monitor student attempts and quiz performance."
               button="View Results"
-              onClick={() => navigate("/admin/results")}
+              onClick={() =>
+                navigate("/admin/results")
+              }
             />
 
             <DashboardCard
@@ -139,7 +166,9 @@ function Dashboard() {
               title="Create Quiz"
               description="Create a new quiz and configure its settings."
               button="Create Quiz"
-              onClick={() => navigate("/admin/quizzes/create")}
+              onClick={() =>
+                navigate("/admin/quizzes/create")
+              }
             />
 
             <DashboardCard
@@ -147,17 +176,26 @@ function Dashboard() {
               title="Admin Settings"
               description="Manage your administrator account and platform settings."
               button="Settings"
-              onClick={() => navigate("/admin/settings")}
+              onClick={() =>
+                navigate("/admin/settings")
+              }
             />
+
           </div>
+
         ) : (
+
+          /* STUDENT DASHBOARD */
           <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+
             <DashboardCard
               icon="📝"
               title="Available Quizzes"
               description="View available quizzes and start your test."
               button="View Quizzes"
-              onClick={() => navigate("/quizzes")}
+              onClick={() =>
+                navigate("/quizzes")
+              }
             />
 
             <DashboardCard
@@ -165,7 +203,9 @@ function Dashboard() {
               title="My Results"
               description="View your quiz scores and performance."
               button="View Results"
-              onClick={() => navigate("/results")}
+              onClick={() =>
+                navigate("/results")
+              }
             />
 
             <DashboardCard
@@ -173,14 +213,28 @@ function Dashboard() {
               title="Certificates"
               description="View and download certificates for passed quizzes."
               button="View Certificates"
-              onClick={() => navigate("/certificates")}
+              onClick={() =>
+                navigate("/certificates")
+              }
             />
+            <DashboardCard
+              icon="⚙️"
+              title="Settings"
+              description="Manage your profile, password and account preferences."
+              button="Settings"
+              onClick={() => navigate("/settings")}
+            />
+
           </div>
+
         )}
+
       </main>
+
     </div>
   );
 }
+
 
 function DashboardCard({
   icon,
@@ -191,6 +245,7 @@ function DashboardCard({
 }) {
   return (
     <div className="flex min-h-[250px] flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-2xl">
         {icon}
       </div>
@@ -204,6 +259,7 @@ function DashboardCard({
       </p>
 
       <div className="mt-auto pt-7">
+
         <button
           type="button"
           onClick={onClick}
@@ -211,49 +267,76 @@ function DashboardCard({
         >
           {button}
         </button>
+
       </div>
+
     </div>
   );
 }
 
+
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("access_token");
+  const token =
+    localStorage.getItem("access_token");
 
   const user = JSON.parse(
     localStorage.getItem("user") || "null"
   );
 
   if (!token || !user) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
 
   return children;
 }
 
+
 function AdminRoute({ children }) {
-  const token = localStorage.getItem("access_token");
+  const token =
+    localStorage.getItem("access_token");
 
   const user = JSON.parse(
     localStorage.getItem("user") || "null"
   );
 
-  const role = user?.role?.toLowerCase();
+  const role =
+    user?.role?.toLowerCase();
 
   if (!token || !user) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
 
   if (role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
   }
 
   return children;
 }
+
+
 
 function App() {
   return (
     <BrowserRouter>
+
       <Routes>
+
+
         <Route
           path="/login"
           element={<Login />}
@@ -263,6 +346,9 @@ function App() {
           path="/register"
           element={<Register />}
         />
+
+
+
 
         <Route
           path="/"
@@ -274,6 +360,9 @@ function App() {
           }
         />
 
+
+
+
         <Route
           path="/dashboard"
           element={
@@ -282,6 +371,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+
+
 
         <Route
           path="/quizzes"
@@ -310,6 +402,9 @@ function App() {
           }
         />
 
+
+
+
         <Route
           path="/results"
           element={
@@ -328,6 +423,9 @@ function App() {
           }
         />
 
+
+
+
         <Route
           path="/certificates"
           element={
@@ -336,6 +434,9 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+
+
 
         <Route
           path="/admin/quizzes"
@@ -355,11 +456,26 @@ function App() {
           }
         />
 
+
+
+
         <Route
           path="/admin/questions"
           element={
             <AdminRoute>
               <ManageQuestions />
+            </AdminRoute>
+          }
+        />
+
+
+
+
+        <Route
+          path="/admin/students"
+          element={
+            <AdminRoute>
+              <Students />
             </AdminRoute>
           }
         />
@@ -373,17 +489,42 @@ function App() {
           }
         />
 
+
+
+
         <Route
-          path="/admin/students"
+          path="/admin/results"
           element={
             <AdminRoute>
-              <Students />
+              <QuizResults />
             </AdminRoute>
           }
         />
+
+
+
+        <Route
+          path="/admin/settings"
+          element={
+            <AdminRoute>
+              <AdminSettings />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <StudentSettings />
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
+
     </BrowserRouter>
   );
 }
+
 
 export default App;

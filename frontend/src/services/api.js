@@ -72,13 +72,20 @@ async function handleResponse(response) {
         "Request failed";
     } else if (typeof data?.message === "string") {
       message = data.message;
-    } else if (typeof data === "string" && data.trim()) {
+    } else if (
+      typeof data === "string" &&
+      data.trim()
+    ) {
       message = data;
     } else if (response.statusText) {
       message = response.statusText;
     }
 
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = response.status;
+    error.response = response;
+
+    throw error;
   }
 
   if (contentType.includes("application/pdf")) {
@@ -416,6 +423,18 @@ export async function getResult(attemptId) {
   return getQuizResult(attemptId);
 }
 
+export async function getAllQuizResults() {
+  const response = await fetch(
+    `${API_BASE_URL}/results/`,
+    {
+      method: "GET",
+      headers: authHeaders(),
+    }
+  );
+
+  return handleResponse(response);
+}
+
 export async function getCertificates() {
   const response = await fetch(
     `${API_BASE_URL}/certificates`,
@@ -461,7 +480,9 @@ export async function downloadCertificate(
       const contentType =
         response.headers.get("content-type") || "";
 
-      if (contentType.includes("application/json")) {
+      if (
+        contentType.includes("application/json")
+      ) {
         const data = await response.json();
 
         if (typeof data?.detail === "string") {
