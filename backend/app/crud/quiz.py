@@ -10,7 +10,8 @@ def create_quiz(db: Session, quiz: QuizCreate):
         description=quiz.description,
         duration=quiz.duration,
         total_marks=quiz.total_marks,
-        passing_percentage=quiz.passing_percentage
+        passing_percentage=quiz.passing_percentage,
+        is_active=quiz.is_active
     )
 
     db.add(db_quiz)
@@ -21,7 +22,7 @@ def create_quiz(db: Session, quiz: QuizCreate):
 
 
 def get_all_quizzes(db: Session):
-    return db.query(Quiz).all()
+    return db.query(Quiz).order_by(Quiz.id.desc()).all()
 
 
 def get_quiz_by_id(db: Session, quiz_id: int):
@@ -47,20 +48,19 @@ def update_quiz(
     db_quiz.duration = quiz_data.duration
     db_quiz.total_marks = quiz_data.total_marks
     db_quiz.passing_percentage = quiz_data.passing_percentage
+    db_quiz.is_active = quiz_data.is_active
 
     db.commit()
     db.refresh(db_quiz)
 
     return db_quiz
 
+
 def delete_quiz(
     db: Session,
     quiz_id: int
 ):
-    db_quiz = get_quiz_by_id(
-        db,
-        quiz_id
-    )
+    db_quiz = get_quiz_by_id(db, quiz_id)
 
     if not db_quiz:
         return None

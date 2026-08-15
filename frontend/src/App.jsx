@@ -1,11 +1,5 @@
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useNavigate,
-} from "react-router-dom";
-
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, }
+  from "react-router-dom";
 import Login from "./pages/Login";
 import Quiz from "./pages/Quiz";
 import QuizList from "./pages/QuizList";
@@ -16,6 +10,7 @@ import CreateQuiz from "./pages/admin/CreateQuiz";
 import ManageQuestions from "./pages/admin/ManageQuestions";
 import Register from "./pages/Register";
 import ManageQuizzes from "./pages/admin/ManageQuizzes";
+import Students from "./pages/admin/Students";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -363,12 +358,20 @@ function App() {
         <Route
           path="/register"
           element={<Register />}
-        />  
-      <Route
+        />
+        <Route
           path="/admin/quizzes"
           element={
             <AdminRoute>
               <ManageQuizzes />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/students"
+          element={
+            <AdminRoute>
+              <Students />
             </AdminRoute>
           }
         />

@@ -8,7 +8,7 @@ from app.api.v1.endpoints.quiz_attempt import router as quiz_attempt_router
 from app.api.v1.endpoints.answer import router as answer_router
 from app.api.v1.endpoints.result import router as result_router
 from app.api.v1.endpoints.user import router as user_router
-
+from app.api.v1.endpoints.student import router as student_router
 from app.api.certificate import router as certificate_router
 
 
@@ -20,16 +20,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ],
-
     allow_credentials=True,
-
     allow_methods=["*"],
-
     allow_headers=["*"],
 )
 
@@ -70,6 +66,11 @@ app.include_router(
 )
 
 app.include_router(
+    student_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
     certificate_router,
     prefix="/api/v1"
 )
@@ -78,6 +79,5 @@ app.include_router(
 @app.get("/")
 def root():
     return {
-        "message":
-        "Quiz Management Platform API is running 🚀"
+        "message": "Quiz Management Platform API is running 🚀"
     }

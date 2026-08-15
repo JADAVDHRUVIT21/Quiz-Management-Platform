@@ -203,6 +203,18 @@ export async function deleteQuiz(quizId) {
   return handleResponse(response);
 }
 
+export async function getStudents() {
+  const response = await fetch(
+    `${API_BASE_URL}/students/`,
+    {
+      method: "GET",
+      headers: authHeaders(),
+    }
+  );
+
+  return handleResponse(response);
+}
+
 /* =========================
    QUESTIONS
 ========================= */
