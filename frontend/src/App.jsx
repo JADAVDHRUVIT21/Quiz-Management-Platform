@@ -18,6 +18,7 @@ import CreateQuiz from "./pages/admin/CreateQuiz";
 import ManageQuestions from "./pages/admin/ManageQuestions";
 import ManageQuizzes from "./pages/admin/ManageQuizzes";
 import Students from "./pages/admin/Students";
+import StudentDetails from "./pages/admin/StudentDetails";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -359,6 +360,15 @@ function App() {
           element={
             <AdminRoute>
               <ManageQuestions />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/students/:studentId"
+          element={
+            <AdminRoute>
+              <StudentDetails />
             </AdminRoute>
           }
         />
