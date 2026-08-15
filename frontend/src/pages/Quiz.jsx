@@ -56,10 +56,8 @@ function Quiz() {
     ).padStart(2, "0")}`;
   };
 
-  // =========================================================
   // LOAD QUIZ
-  // =========================================================
-
+  
   useEffect(() => {
     let cancelled = false;
 
@@ -141,10 +139,8 @@ function Quiz() {
     };
   }, [quizId]);
 
-  // =========================================================
   // TIMER
-  // =========================================================
-
+  
   useEffect(() => {
     if (
       timeLeft === null ||
@@ -214,10 +210,8 @@ function Quiz() {
     quizId,
   ]);
 
-  // =========================================================
   // SELECT ANSWER
-  // =========================================================
-
+  
   const handleSelectAnswer = (answer) => {
     if (saving || !currentQuestion) {
       return;
@@ -229,10 +223,8 @@ function Quiz() {
     }));
   };
 
-  // =========================================================
   // SAVE CURRENT ANSWER
-  // =========================================================
-
+  
   const saveCurrentAnswer = async () => {
     if (!currentQuestion || !attempt?.id) {
       return true;
@@ -286,10 +278,8 @@ function Quiz() {
     }
   };
 
-  // =========================================================
   // SUBMIT QUIZ
-  // =========================================================
-
+  
   const finishQuiz = async () => {
     try {
       setSaving(true);
@@ -310,9 +300,7 @@ function Quiz() {
         result
       );
 
-      // =====================================================
-      // CONFETTI ONLY WHEN USER PASSES
-      // =====================================================
+      // CONFETTI ONLY WHEN USER PASSES      
 
       if (
         result &&
@@ -339,9 +327,7 @@ function Quiz() {
     }
   };
 
-  // =========================================================
-  // NEXT
-  // =========================================================
+// NEXT  
 
   const handleNext = async () => {
     if (saving) {
@@ -372,9 +358,7 @@ function Quiz() {
     await finishQuiz();
   };
 
-  // =========================================================
-  // PREVIOUS
-  // =========================================================
+// PREVIOUS  
 
   const handlePrevious = () => {
     if (
@@ -390,10 +374,8 @@ function Quiz() {
       (previous) => previous - 1
     );
   };
-
-  // =========================================================
-  // QUESTION NAVIGATION
-  // =========================================================
+  
+// QUESTION NAVIGATION
 
   const handleQuestionNavigation = async (
     index
@@ -416,11 +398,9 @@ function Quiz() {
 
     setCurrentIndex(index);
   };
-
-  // =========================================================
-  // EXIT
-  // =========================================================
-
+  
+// EXIT
+  
   const handleExit = () => {
     const confirmed = window.confirm(
       "Are you sure you want to exit this quiz? Your current attempt may remain incomplete."
@@ -430,10 +410,8 @@ function Quiz() {
       navigate("/dashboard");
     }
   };
-
-  // =========================================================
-  // LOADING SCREEN
-  // =========================================================
+  
+// LOADING SCREEN  
 
   if (loading) {
     return (
@@ -465,10 +443,8 @@ function Quiz() {
     );
   }
 
-  // =========================================================
-  // ERROR SCREEN
-  // =========================================================
-
+// ERROR SCREEN
+  
   if (error && !currentQuestion) {
     return (
       <div className="min-h-screen bg-slate-50">
@@ -519,10 +495,8 @@ function Quiz() {
     );
   }
 
-  // =========================================================
   // QUIZ SCREEN
-  // =========================================================
-
+  
   return (
     <div className="min-h-screen bg-slate-50">
       {/* =====================================================

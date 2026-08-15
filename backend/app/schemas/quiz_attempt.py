@@ -1,17 +1,12 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-
-# ============================================================
 # CREATE ATTEMPT
-# ============================================================
 
 class QuizAttemptCreate(BaseModel):
     quiz_id: int
 
 
-# ============================================================
 # ATTEMPT RESPONSE
-# ============================================================
 
 class QuizAttemptResponse(BaseModel):
     id: int
@@ -24,9 +19,7 @@ class QuizAttemptResponse(BaseModel):
     )
 
 
-# ============================================================
 # QUESTION REVIEW
-# ============================================================
 
 class QuizQuestionReview(BaseModel):
     question_id: int
@@ -47,9 +40,7 @@ class QuizQuestionReview(BaseModel):
     is_unanswered: bool
 
 
-# ============================================================
 # REVIEW QUESTION RESPONSE
-# ============================================================
 
 class QuizReviewQuestionResponse(BaseModel):
     question_id: int
@@ -69,9 +60,7 @@ class QuizReviewQuestionResponse(BaseModel):
     status: str
 
 
-# ============================================================
 # RESULT RESPONSE
-# ============================================================
 
 class QuizResultResponse(BaseModel):
     attempt_id: int
@@ -94,9 +83,8 @@ class QuizResultResponse(BaseModel):
     )
 
 
-# ============================================================
+
 # REVIEW RESPONSE
-# ============================================================
 
 class QuizReviewResponse(BaseModel):
     attempt_id: int

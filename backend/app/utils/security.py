@@ -17,10 +17,7 @@ from app.core.config import (
 from app.db.database import get_db
 from app.models.user import User
 
-
-# ============================================================
 # Password Configuration
-# ============================================================
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -28,18 +25,14 @@ pwd_context = CryptContext(
 )
 
 
-# ============================================================
 # JWT Configuration
-# ============================================================
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login"
 )
 
 
-# ============================================================
 # Password Functions
-# ============================================================
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -56,9 +49,7 @@ def verify_password(
     )
 
 
-# ============================================================
 # Create JWT Access Token
-# ============================================================
 
 def create_access_token(data: dict):
 
@@ -79,9 +70,7 @@ def create_access_token(data: dict):
     )
 
 
-# ============================================================
 # Get Current Logged-in User
-# ============================================================
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -96,10 +85,8 @@ def get_current_user(
         },
     )
 
-    # --------------------------------------------------------
     # Decode JWT
-    # --------------------------------------------------------
-
+    
     try:
 
         payload = jwt.decode(
@@ -121,9 +108,7 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    # --------------------------------------------------------
     # Find user in database
-    # --------------------------------------------------------
 
     user = (
         db.query(User)
@@ -131,15 +116,11 @@ def get_current_user(
         .first()
     )
 
-    # --------------------------------------------------------
     # User does not exist
-    # --------------------------------------------------------
-
+    
     if user is None:
         raise credentials_exception
 
-    # --------------------------------------------------------
     # Return the actual User object
-    # --------------------------------------------------------
 
     return user

@@ -62,9 +62,8 @@ function authHeaders() {
   };
 }
 
-/* =========================
-   AUTH
-========================= */
+  //  AUTH
+
 
 export async function loginUser(email, password) {
   const formData = new URLSearchParams();
@@ -110,9 +109,8 @@ export async function registerUser(
   return handleResponse(response);
 }
 
-/* =========================
-   QUIZZES
-========================= */
+   //  QUIZZES
+
 
 export async function getQuizzes() {
   const response = await fetch(
@@ -215,9 +213,8 @@ export async function getStudents() {
   return handleResponse(response);
 }
 
-/* =========================
-   QUESTIONS
-========================= */
+   //  QUESTIONS
+
 
 export async function getQuestionsByQuiz(
   quizId
@@ -237,9 +234,8 @@ export async function getQuestions(quizId) {
   return getQuestionsByQuiz(quizId);
 }
 
-/* =========================
-   QUIZ ATTEMPTS
-========================= */
+   //  QUIZ ATTEMPTS
+
 
 export async function startQuiz(quizId) {
   const response = await fetch(
@@ -295,9 +291,8 @@ export async function getMyAttempts() {
   return handleResponse(response);
 }
 
-/* =========================
-   ANSWERS
-========================= */
+   //  ANSWERS
+
 
 export async function submitAnswer(
   attemptId,
@@ -329,9 +324,8 @@ export async function submitAnswer(
   return handleResponse(response);
 }
 
-/* =========================
-   RESULTS
-========================= */
+   //  RESULTS
+
 
 export async function getQuizResult(
   attemptId
@@ -365,9 +359,8 @@ export async function getResult(attemptId) {
   return getQuizResult(attemptId);
 }
 
-/* =========================
-   CERTIFICATES
-========================= */
+   //  CERTIFICATES
+
 
 export async function getCertificates() {
   const response = await fetch(

@@ -24,11 +24,8 @@ router = APIRouter(
 )
 
 
-# ============================================================
-# CREATE / START QUIZ ATTEMPT
-# POST /api/v1/attempts/
-# ============================================================
 
+# CREATE / START QUIZ ATTEMPT
 @router.post(
     "/",
     response_model=QuizAttemptResponse,
@@ -53,11 +50,8 @@ def create_attempt(
     return attempt
 
 
-# ============================================================
-# GET MY ATTEMPTS
-# GET /api/v1/attempts/
-# ============================================================
 
+# GET MY ATTEMPTS
 @router.get(
     "/",
     response_model=list[QuizAttemptResponse],
@@ -72,10 +66,8 @@ def get_attempts(
     )
 
 
-# ============================================================
+
 # GET SINGLE ATTEMPT
-# GET /api/v1/attempts/{attempt_id}
-# ============================================================
 
 @router.get(
     "/{attempt_id}",
@@ -106,10 +98,8 @@ def get_attempt(
     return attempt
 
 
-# ============================================================
+
 # SUBMIT QUIZ ATTEMPT
-# POST /api/v1/attempts/{attempt_id}/submit
-# ============================================================
 
 @router.post(
     "/{attempt_id}/submit",

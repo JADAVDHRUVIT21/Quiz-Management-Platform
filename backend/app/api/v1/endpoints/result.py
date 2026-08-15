@@ -22,11 +22,7 @@ router = APIRouter(
 )
 
 
-# ============================================================
 # GET RESULT
-# GET /api/v1/results/{attempt_id}
-# ============================================================
-
 @router.get(
     "/{attempt_id}",
     response_model=QuizResultResponse,
@@ -51,10 +47,7 @@ def get_result(
     return result
 
 
-# ============================================================
 # GET REVIEW
-# GET /api/v1/results/{attempt_id}/review
-# ============================================================
 
 @router.get(
     "/{attempt_id}/review",

@@ -1,14 +1,21 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, }
-  from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
+
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Quiz from "./pages/Quiz";
 import QuizList from "./pages/QuizList";
 import QuizResult from "./pages/QuizResult";
 import Results from "./pages/Result";
 import Certificate from "./pages/Certificate";
+
 import CreateQuiz from "./pages/admin/CreateQuiz";
 import ManageQuestions from "./pages/admin/ManageQuestions";
-import Register from "./pages/Register";
 import ManageQuizzes from "./pages/admin/ManageQuizzes";
 import Students from "./pages/admin/Students";
 
@@ -20,6 +27,7 @@ function Dashboard() {
   );
 
   const role = user?.role?.toLowerCase();
+  const isAdmin = role === "admin";
 
   const logout = () => {
     localStorage.removeItem("access_token");
@@ -33,8 +41,6 @@ function Dashboard() {
   if (!user) {
     return null;
   }
-
-  const isAdmin = role === "admin";
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -70,7 +76,7 @@ function Dashboard() {
             <button
               type="button"
               onClick={logout}
-              className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 sm:px-5 sm:py-2.5 sm:text-sm"
+              className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:px-5 sm:py-2.5 sm:text-sm"
             >
               Logout
             </button>
@@ -100,7 +106,6 @@ function Dashboard() {
               title="Manage Quizzes"
               description="Create, update and delete quizzes."
               button="Manage Quizzes"
-              primary
               onClick={() => navigate("/admin/quizzes")}
             />
 
@@ -109,7 +114,6 @@ function Dashboard() {
               title="Manage Questions"
               description="Add, edit and remove questions from quizzes."
               button="Manage Questions"
-              primary
               onClick={() => navigate("/admin/questions")}
             />
 
@@ -118,7 +122,6 @@ function Dashboard() {
               title="Students"
               description="View and manage registered students."
               button="View Students"
-              primary
               onClick={() => navigate("/admin/students")}
             />
 
@@ -127,7 +130,6 @@ function Dashboard() {
               title="Quiz Results"
               description="Monitor student attempts and quiz performance."
               button="View Results"
-              primary
               onClick={() => navigate("/admin/results")}
             />
 
@@ -136,7 +138,6 @@ function Dashboard() {
               title="Create Quiz"
               description="Create a new quiz and configure its settings."
               button="Create Quiz"
-              primary
               onClick={() => navigate("/admin/quizzes/create")}
             />
 
@@ -145,7 +146,6 @@ function Dashboard() {
               title="Admin Settings"
               description="Manage your administrator account and platform settings."
               button="Settings"
-              primary
               onClick={() => navigate("/admin/settings")}
             />
           </div>
@@ -156,7 +156,6 @@ function Dashboard() {
               title="Available Quizzes"
               description="View available quizzes and start your test."
               button="View Quizzes"
-              primary
               onClick={() => navigate("/quizzes")}
             />
 
@@ -165,7 +164,6 @@ function Dashboard() {
               title="My Results"
               description="View your quiz scores and performance."
               button="View Results"
-              primary
               onClick={() => navigate("/results")}
             />
 
@@ -174,7 +172,6 @@ function Dashboard() {
               title="Certificates"
               description="View and download certificates for passed quizzes."
               button="View Certificates"
-              primary
               onClick={() => navigate("/certificates")}
             />
           </div>
@@ -189,11 +186,10 @@ function DashboardCard({
   title,
   description,
   button,
-  primary = false,
   onClick,
 }) {
   return (
-    <div className="flex min-h-[250px] flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="flex min-h-[250px] flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-2xl">
         {icon}
       </div>
@@ -210,11 +206,7 @@ function DashboardCard({
         <button
           type="button"
           onClick={onClick}
-          className={
-            primary
-              ? "w-full rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 sm:w-auto"
-              : "w-full rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto"
-          }
+          className="w-full rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto"
         >
           {button}
         </button>
@@ -267,20 +259,26 @@ function App() {
         />
 
         <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
+        />
+
+        <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/quizzes/create"
-          element={
-            <AdminRoute>
-              <CreateQuiz />
-            </AdminRoute>
           }
         />
 
@@ -339,14 +337,23 @@ function App() {
         />
 
         <Route
-          path="/"
+          path="/admin/quizzes"
           element={
-            <Navigate
-              to="/dashboard"
-              replace
-            />
+            <AdminRoute>
+              <ManageQuizzes />
+            </AdminRoute>
           }
         />
+
+        <Route
+          path="/admin/quizzes/create"
+          element={
+            <AdminRoute>
+              <CreateQuiz />
+            </AdminRoute>
+          }
+        />
+
         <Route
           path="/admin/questions"
           element={
@@ -355,18 +362,7 @@ function App() {
             </AdminRoute>
           }
         />
-        <Route
-          path="/register"
-          element={<Register />}
-        />
-        <Route
-          path="/admin/quizzes"
-          element={
-            <AdminRoute>
-              <ManageQuizzes />
-            </AdminRoute>
-          }
-        />
+
         <Route
           path="/admin/students"
           element={
