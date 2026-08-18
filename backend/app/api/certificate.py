@@ -20,11 +20,75 @@ router = APIRouter(
 )
 
 
+# def get_passed_attempt(
+#     db: Session,
+#     attempt_id: int,
+#     current_user: User,
+# ):
+#     print("====================================")
+#     print("CERTIFICATE DEBUG")
+#     print("attempt_id:", attempt_id)
+#     print("current_user.id:", current_user.id)
+
+#     attempt = (
+#         db.query(QuizAttempt)
+#         .filter(
+#             QuizAttempt.id == attempt_id,
+#             QuizAttempt.user_id == current_user.id,
+#         )
+#         .first()
+#     )
+
+#     if not attempt:
+#         raise HTTPException(
+#             status_code=404,
+#             detail="Quiz attempt not found.",
+#         )
+
+#     quiz = attempt.quiz
+
+#     if not quiz:
+#         raise HTTPException(
+#             status_code=404,
+#             detail="Quiz information not found.",
+#         )
+
+#     if quiz.total_marks <= 0:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Quiz total marks are not configured correctly.",
+#         )
+
+#     percentage = round(
+#         (attempt.score / quiz.total_marks) * 100,
+#         2,
+#     )
+
+#     if percentage < quiz.passing_percentage:
+#         raise HTTPException(
+#             status_code=403,
+#             detail={
+#                 "message": "Certificate not available.",
+#                 "reason": "You have not passed the quiz.",
+#                 "score": attempt.score,
+#                 "total_marks": quiz.total_marks,
+#                 "percentage": percentage,
+#                 "required_percentage": quiz.passing_percentage,
+#             },
+#         )
+
+#     return attempt, quiz, percentage
+
 def get_passed_attempt(
     db: Session,
     attempt_id: int,
     current_user: User,
 ):
+    print("====================================")
+    print("CERTIFICATE DEBUG")
+    print("attempt_id:", attempt_id)
+    print("current_user.id:", current_user.id)
+
     attempt = (
         db.query(QuizAttempt)
         .filter(
@@ -34,46 +98,78 @@ def get_passed_attempt(
         .first()
     )
 
+    print("attempt found:", attempt)
+
     if not attempt:
+        print("❌ ATTEMPT NOT FOUND")
         raise HTTPException(
             status_code=404,
             detail="Quiz attempt not found.",
         )
 
+    print("attempt.id:", attempt.id)
+    print("attempt.user_id:", attempt.user_id)
+    print("attempt.quiz_id:", attempt.quiz_id)
+    print("attempt.score:", attempt.score)
+
     quiz = attempt.quiz
 
+    print("quiz found:", quiz)
+
     if not quiz:
+        print("❌ QUIZ NOT FOUND")
         raise HTTPException(
             status_code=404,
             detail="Quiz information not found.",
         )
 
+    print("quiz.id:", quiz.id)
+    print("quiz.title:", quiz.title)
+    print("quiz.total_marks:", quiz.total_marks)
+    print("quiz.passing_percentage:", quiz.passing_percentage)
+
     if quiz.total_marks <= 0:
+        print("❌ INVALID TOTAL MARKS")
         raise HTTPException(
             status_code=400,
             detail="Quiz total marks are not configured correctly.",
         )
-
+    print("attempt.score / quiz.total_marks", attempt.score, quiz.total_marks)
     percentage = round(
         (attempt.score / quiz.total_marks) * 100,
         2,
     )
 
-    if percentage < quiz.passing_percentage:
-        raise HTTPException(
-            status_code=403,
-            detail={
-                "message": "Certificate not available.",
-                "reason": "You have not passed the quiz.",
-                "score": attempt.score,
-                "total_marks": quiz.total_marks,
-                "percentage": percentage,
-                "required_percentage": quiz.passing_percentage,
-            },
-        )
+    print("====================================")
+    print("CALCULATION")
+    print("score:", attempt.score)
+    print("total_marks:", quiz.total_marks)
+    print("percentage:", percentage)
+    print("passing_percentage:", quiz.passing_percentage)
+    print("====================================")
+
+    # if percentage < quiz.passing_percentage:
+    #     print("❌ CERTIFICATE REJECTED")
+    #     print(
+    #         f"{percentage}% < {quiz.passing_percentage}%"
+    #     )
+
+    #     raise HTTPException(
+    #         status_code=403,
+    #         detail={
+    #             "message": "Certificate not available.",
+    #             "reason": "You have not passed the quiz.",
+    #             "score": attempt.score,
+    #             "total_marks": quiz.total_marks,
+    #             "percentage": percentage,
+    #             "required_percentage": quiz.passing_percentage,
+    #         },
+    #     )
+
+    print("✅ CERTIFICATE APPROVED")
+    print("====================================")
 
     return attempt, quiz, percentage
-
 
 @router.get("")
 def get_certificates(
@@ -95,12 +191,12 @@ def get_certificates(
 
     for attempt in attempts:
         quiz = attempt.quiz
-
+        print("attempt.score", attempt.score)
         if not quiz or quiz.total_marks <= 0:
             continue
-
+        
         percentage = round(
-            (attempt.score / quiz.total_marks) * 100,
+            ((attempt.score * 10) / quiz.total_marks) * 100,
             2,
         )
 
@@ -154,7 +250,7 @@ def get_certificate(
         attempt_id,
         current_user,
     )
-
+    print("my[ percentage ]", percentage)
     return {
         "certificate_available": True,
         "student": {
@@ -187,7 +283,9 @@ def download_certificate(
     attempt_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-):
+):  
+    print("Downloading certificate for attempt_id:", attempt_id)
+
     attempt, quiz, percentage = get_passed_attempt(
         db,
         attempt_id,

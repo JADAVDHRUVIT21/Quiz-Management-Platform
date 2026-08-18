@@ -4,8 +4,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Quiz from "./pages/Quiz";
 import QuizList from "./pages/QuizList";
-import QuizResult from "./pages/admin/QuizResult";
-import Results from "./pages/Result";
+// import QuizResult from "./pages/admin/QuizResult";
+import QuizResult from "./pages/QuizResult";
+import Results from "./pages/Results";
 import Certificate from "./pages/Certificate";
 
 import CreateQuiz from "./pages/admin/CreateQuiz";
@@ -13,10 +14,12 @@ import ManageQuestions from "./pages/admin/ManageQuestions";
 import ManageQuizzes from "./pages/admin/ManageQuizzes";
 import Students from "./pages/admin/Students";
 import StudentDetails from "./pages/admin/StudentDetails";
-import QuizResults from "./pages/admin/QuizResult";
+import QuizResults from "./pages/admin/QuizResultAdmin";
 import AdminSettings from "./pages/admin/AdminSettings";
-import quizResult from "./pages/admin/QuizResult";
 import StudentSettings from "./pages/StudentSettings";
+import QuizResultAdmin from "./pages/admin/QuizResultAdmin";
+
+
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -316,14 +319,14 @@ function AdminRoute({ children }) {
     );
   }
 
-  if (role !== "admin") {
-    return (
-      <Navigate
-        to="/dashboard"
-        replace
-      />
-    );
-  }
+  // if (role !== "user" ) {
+  //   return (
+  //     <Navigate
+  //       to="/dashboard"
+  //       replace
+  //     />
+  //   );
+  // }
 
   return children;
 }
@@ -396,9 +399,9 @@ function App() {
         <Route
           path="/quiz/:quizId/result/:attemptId"
           element={
-            <ProtectedRoute>
-              <QuizResult />
-            </ProtectedRoute>
+            <AdminRoute>
+              <QuizResultAdmin />
+            </AdminRoute>
           }
         />
 
@@ -427,10 +430,11 @@ function App() {
 
 
         <Route
-          path="/certificates"
+          path="/certificate/:attemptId"
           element={
             <ProtectedRoute>
-              <Certificate />
+              {/* <Certificate /> */}
+              <QuizResult />
             </ProtectedRoute>
           }
         />

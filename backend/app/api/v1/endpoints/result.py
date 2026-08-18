@@ -17,7 +17,6 @@ from app.schemas.quiz_attempt import (
     QuizReviewResponse,
 )
 
-
 router = APIRouter(
     prefix="/results",
     tags=["Quiz Results"],
@@ -31,17 +30,19 @@ def get_all_quiz_results(
 ):
     role = str(getattr(current_user, "role", "")).lower()
 
-    if role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Admin access required",
+    if role == "admin":
+        attempts = (
+            db.query(QuizAttempt)
+            .order_by(QuizAttempt.created_at.desc())
+            .all()
         )
-
-    attempts = (
-        db.query(QuizAttempt)
-        .order_by(QuizAttempt.created_at.desc())
-        .all()
-    )
+    else:
+        attempts = (
+            db.query(QuizAttempt)
+            .filter(QuizAttempt.user_id == current_user.id)
+            .order_by(QuizAttempt.created_at.desc())
+            .all()
+        )
 
     results = []
 

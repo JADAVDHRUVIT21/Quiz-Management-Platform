@@ -15,7 +15,7 @@ function Certificate() {
     "http://127.0.0.1:8000";
 
   // LOAD ALL PASSED CERTIFICATES
-  
+
   const loadCertificates = async () => {
     try {
       setLoading(true);
@@ -76,7 +76,7 @@ function Certificate() {
   }, []);
 
   // DOWNLOAD CERTIFICATE FOR ANY PASSED ATTEMPT
-  
+
   const handleDownloadCertificate = async (
     certificate
   ) => {
@@ -126,7 +126,7 @@ function Certificate() {
       }
 
       // CREATE PDF BLOB
-      
+
       const contentType =
         response.headers["content-type"] ||
         "application/pdf";
@@ -137,9 +137,9 @@ function Certificate() {
           type: contentType,
         }
       );
-      
+
       // CREATE DOWNLOAD LINK
-      
+
       const url =
         window.URL.createObjectURL(blob);
 
@@ -175,7 +175,7 @@ function Certificate() {
       );
 
       // AXIOS BLOB ERROR HANDLING
-      
+
       let backendMessage = "";
 
       if (
@@ -211,9 +211,9 @@ function Certificate() {
           backendMessage = "";
         }
       }
-      
+
       // 401
-      
+
       if (
         err?.response?.status === 401
       ) {
@@ -229,28 +229,28 @@ function Certificate() {
 
         return;
       }
-      
+
       // 403
-      
+
       if (
         err?.response?.status === 403
       ) {
         setError(
           backendMessage ||
-            "Certificate is available only for passed quizzes."
+          "Certificate is available only for passed quizzes."
         );
 
         return;
       }
-      
+
       // 404
-    
+
       if (
         err?.response?.status === 404
       ) {
         setError(
           backendMessage ||
-            "Certificate could not be found for this quiz attempt."
+          "Certificate could not be found for this quiz attempt."
         );
 
         return;
@@ -258,15 +258,15 @@ function Certificate() {
 
       setError(
         backendMessage ||
-          "Unable to download certificate. Please try again."
+        "Unable to download certificate. Please try again."
       );
     } finally {
       setDownloadingId(null);
     }
   };
-  
+
   // LOADING
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50">
@@ -304,7 +304,7 @@ function Certificate() {
   }
 
   // ERROR
-  
+
   if (error && !data) {
     return (
       <div className="min-h-screen bg-slate-50">

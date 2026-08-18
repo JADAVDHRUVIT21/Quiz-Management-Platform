@@ -1,12 +1,11 @@
 from sqlalchemy.orm import Session
+
 from app.models.quiz_attempt import QuizAttempt
 from app.models.quiz import Quiz
 from app.models.answer import Answer
 from app.models.question import Question
 from app.schemas.quiz_attempt import QuizAttemptCreate
 
-
-# CREATE QUIZ ATTEMPT
 
 def create_quiz_attempt(
     db: Session,
@@ -34,7 +33,6 @@ def create_quiz_attempt(
 
     return db_attempt
 
-# GET MY ATTEMPTS
 
 def get_my_attempts(
     db: Session,
@@ -51,32 +49,43 @@ def get_my_attempts(
         .all()
     )
 
-# BUILD QUIZ RESULT
 
-def _build_quiz_result(
+def _get_attempt_for_user(
     db: Session,
-    attempt: QuizAttempt,
+    attempt_id: int,
+    user_id: int,
 ):
-
-    # Get quiz
-    
-    quiz = (
-        db.query(Quiz)
+    return (
+        db.query(QuizAttempt)
         .filter(
-            Quiz.id == attempt.quiz_id
+            QuizAttempt.id == attempt_id,
+            QuizAttempt.user_id == user_id,
         )
         .first()
     )
 
-    if not quiz:
-        return None
-    
-    # Get all questions
-    
-    questions = (
+
+def _get_quiz(
+    db: Session,
+    quiz_id: int,
+):
+    return (
+        db.query(Quiz)
+        .filter(
+            Quiz.id == quiz_id
+        )
+        .first()
+    )
+
+
+def _get_questions(
+    db: Session,
+    quiz_id: int,
+):
+    return (
         db.query(Question)
         .filter(
-            Question.quiz_id == quiz.id
+            Question.quiz_id == quiz_id
         )
         .order_by(
             Question.id.asc()
@@ -84,316 +93,15 @@ def _build_quiz_result(
         .all()
     )
 
-    # Get submitted answers
 
-    answers = (
+def _get_answers(
+    db: Session,
+    attempt_id: int,
+):
+    return (
         db.query(Answer)
         .filter(
-            Answer.attempt_id == attempt.id
-        )
-        .order_by(
-            Answer.id.asc()
-        )
-        .all()
-    )
-    
-    # Map answers by question ID
-
-    answer_map = {
-        answer.question_id: answer
-        for answer in answers
-    }
-
-
-    # Calculate totals
-    
-    total_questions = len(questions)
-
-    # Calculate total marks from actual questions.
-    # If questions exist, this is more reliable than relying
-    # only on quizzes.total_marks.
-    calculated_total_marks = sum(
-        int(question.marks or 0)
-        for question in questions
-    )
-    # Use calculated marks when available.
-    # Otherwise fall back to quiz.total_marks.
-    if calculated_total_marks > 0:
-        total_marks = calculated_total_marks
-    else:
-        total_marks = int(
-            quiz.total_marks or 0
-        )
-    
-    # Initialize counters
-    
-    correct_answers = 0
-    incorrect_answers = 0
-    unanswered = 0
-    score = 0
-
-    question_reviews = []
-
-    # Evaluate every question
-    
-    for index, question in enumerate(questions):
-
-        answer = answer_map.get(
-            question.id
-        )
-
-        # Selected answer
-    
-        selected_answer = None
-
-        if answer:
-            selected_answer = (
-                answer.selected_answer or ""
-            ).strip().upper()
-
-            if selected_answer == "":
-                selected_answer = None
-
-        # Correct answer
-    
-        correct_answer = (
-            question.correct_answer or ""
-        ).strip().upper()
-
-        # Determine status
-
-        if selected_answer is None:
-
-            is_unanswered = True
-            is_correct = False
-
-            unanswered += 1
-
-            status = "unanswered"
-
-        elif selected_answer == correct_answer:
-
-            is_unanswered = False
-            is_correct = True
-
-            correct_answers += 1
-
-            score += int(
-                question.marks or 0
-            )
-
-            status = "correct"
-
-        else:
-
-            is_unanswered = False
-            is_correct = False
-
-            incorrect_answers += 1
-
-            status = "incorrect"
-            
-        # Question review
-        
-        question_reviews.append(
-            {
-                "question_id": question.id,
-                "question_number": index + 1,
-                "question_text": question.question_text,
-                "option_a": question.option_a,
-                "option_b": question.option_b,
-                "option_c": question.option_c,
-                "option_d": question.option_d,
-                "selected_answer": selected_answer,
-                "correct_answer": correct_answer,
-                "marks": int(
-                    question.marks or 0
-                ),
-                "is_correct": is_correct,
-                "is_unanswered": is_unanswered,
-                "status": status,
-            }
-        )
-
-    # Calculate percentage
-    
-    if total_marks > 0:
-
-        percentage = round(
-            (
-                float(score)
-                / float(total_marks)
-            ) * 100,
-            2,
-        )
-
-    else:
-
-        percentage = 0.0
-    
-    # Passing percentage
-
-    passing_percentage = float(
-        quiz.passing_percentage or 0
-    )
-
-    # Determine result
-    
-    if total_questions == 0:
-
-        result = "NO_QUESTIONS"
-
-    elif total_marks <= 0:
-
-        result = "NO_MARKS"
-
-    elif percentage >= passing_percentage:
-
-        result = "PASS"
-
-    else:
-
-        result = "FAIL"
-
-    # Save calculated score
-
-    attempt.score = score
-
-    db.commit()
-    db.refresh(attempt)
-    
-    # Return complete result
-
-    return {
-        "attempt_id": attempt.id,
-
-        "quiz_id": quiz.id,
-
-        "quiz_title": quiz.title,
-
-        "score": score,
-
-        "total_marks": total_marks,
-
-        "correct_answers": correct_answers,
-
-        "incorrect_answers": incorrect_answers,
-
-        "unanswered": unanswered,
-
-        "total_questions": total_questions,
-
-        "percentage": percentage,
-
-        "passing_percentage": passing_percentage,
-
-        "result": result,
-
-        "status": (
-            "COMPLETED"
-            if total_questions > 0
-            else "NO_QUESTIONS"
-        ),
-
-        "created_at": attempt.created_at,
-
-        "questions": question_reviews,
-    }
-
-# SUBMIT QUIZ ATTEMPT
-
-def submit_quiz_attempt(
-    db: Session,
-    attempt_id: int,
-    user_id: int,
-):
-    attempt = (
-        db.query(QuizAttempt)
-        .filter(
-            QuizAttempt.id == attempt_id,
-            QuizAttempt.user_id == user_id,
-        )
-        .first()
-    )
-
-    if not attempt:
-        return None
-
-    return _build_quiz_result(
-        db=db,
-        attempt=attempt,
-    )
-
-# GET QUIZ RESULT
-
-def get_quiz_result(
-    db: Session,
-    attempt_id: int,
-    user_id: int,
-):
-    attempt = (
-        db.query(QuizAttempt)
-        .filter(
-            QuizAttempt.id == attempt_id,
-            QuizAttempt.user_id == user_id,
-        )
-        .first()
-    )
-
-    if not attempt:
-        return None
-
-    return _build_quiz_result(
-        db=db,
-        attempt=attempt,
-    )
-
-
-# GET QUIZ REVIEW
-
-def get_quiz_review(
-    db: Session,
-    attempt_id: int,
-    user_id: int,
-):
-    attempt = (
-        db.query(QuizAttempt)
-        .filter(
-            QuizAttempt.id == attempt_id,
-            QuizAttempt.user_id == user_id,
-        )
-        .first()
-    )
-
-    if not attempt:
-        return None
-
-    quiz = (
-        db.query(Quiz)
-        .filter(
-            Quiz.id == attempt.quiz_id
-        )
-        .first()
-    )
-
-    if not quiz:
-        return None
-
-    questions = (
-        db.query(Question)
-        .filter(
-            Question.quiz_id == quiz.id
-        )
-        .order_by(
-            Question.id.asc()
-        )
-        .all()
-    )
-
-    answers = (
-        db.query(Answer)
-        .filter(
-            Answer.attempt_id == attempt.id
+            Answer.attempt_id == attempt_id
         )
         .order_by(
             Answer.id.asc()
@@ -401,6 +109,20 @@ def get_quiz_review(
         .all()
     )
 
+
+def _normalize_answer(value):
+    if value is None:
+        return None
+
+    value = str(value).strip().upper()
+
+    return value if value else None
+
+
+def _build_question_review(
+    questions,
+    answers,
+):
     answer_map = {
         answer.question_id: answer
         for answer in answers
@@ -408,76 +130,312 @@ def get_quiz_review(
 
     review = []
 
-    for index, question in enumerate(questions):
+    correct_answers = 0
+    incorrect_answers = 0
+    unanswered = 0
+    score = 0
 
-        answer = answer_map.get(
-            question.id
-        )
+    for index, question in enumerate(questions):
+        answer = answer_map.get(question.id)
 
         selected_answer = None
 
         if answer:
-            selected_answer = (
-                answer.selected_answer or ""
-            ).strip().upper()
+            selected_answer = _normalize_answer(
+                answer.selected_answer
+            )
 
-            if selected_answer == "":
-                selected_answer = None
+        correct_answer = _normalize_answer(
+            question.correct_answer
+        )
 
-        correct_answer = (
-            question.correct_answer or ""
-        ).strip().upper()
+        marks = int(question.marks or 0)
 
         if selected_answer is None:
-
             status = "unanswered"
+            is_correct = False
+            is_unanswered = True
+            unanswered += 1
 
         elif selected_answer == correct_answer:
-
             status = "correct"
+            is_correct = True
+            is_unanswered = False
+            correct_answers += 1
+            score += marks
 
         else:
-
             status = "incorrect"
+            is_correct = False
+            is_unanswered = False
+            incorrect_answers += 1
 
         review.append(
             {
                 "question_id": question.id,
-
                 "question_number": index + 1,
-
                 "question_text": question.question_text,
-
                 "option_a": question.option_a,
-
                 "option_b": question.option_b,
-
                 "option_c": question.option_c,
-
                 "option_d": question.option_d,
-
                 "selected_answer": selected_answer,
-
                 "correct_answer": correct_answer,
-
-                "marks": int(
-                    question.marks or 0
-                ),
-
+                "marks": marks,
+                "is_correct": is_correct,
+                "is_unanswered": is_unanswered,
                 "status": status,
             }
         )
 
+    return (
+        review,
+        correct_answers,
+        incorrect_answers,
+        unanswered,
+        score,
+    )
+
+
+def _build_quiz_result(
+    db: Session,
+    attempt: QuizAttempt,
+):
+    quiz = _get_quiz(
+        db=db,
+        quiz_id=attempt.quiz_id,
+    )
+
+    if not quiz:
+        return None
+
+    questions = _get_questions(
+        db=db,
+        quiz_id=quiz.id,
+    )
+
+    answers = _get_answers(
+        db=db,
+        attempt_id=attempt.id,
+    )
+
+    (
+        question_reviews,
+        correct_answers,
+        incorrect_answers,
+        unanswered,
+        calculated_score,
+    ) = _build_question_review(
+        questions=questions,
+        answers=answers,
+    )
+
+    calculated_total_marks = sum(
+        int(question.marks or 0)
+        for question in questions
+    )
+
+    if calculated_total_marks > 0:
+        total_marks = calculated_total_marks
+    else:
+        total_marks = int(
+            quiz.total_marks or 0
+        )
+
+    if total_marks > 0:
+        percentage = round(
+            (
+                float(calculated_score)
+                / float(total_marks)
+            )
+            * 100,
+            2,
+        )
+    else:
+        percentage = 0.0
+
+    passing_percentage = float(
+        quiz.passing_percentage
+        if quiz.passing_percentage is not None
+        else 50
+    )
+
+    total_questions = len(questions)
+
+    if total_questions == 0:
+        result = "NO_QUESTIONS"
+        status = "NO_QUESTIONS"
+
+    elif total_marks <= 0:
+        result = "NO_MARKS"
+        status = "NO_MARKS"
+
+    elif percentage >= passing_percentage:
+        result = "PASS"
+        status = "COMPLETED"
+
+    else:
+        result = "FAIL"
+        status = "COMPLETED"
+
+    if attempt.score != calculated_score:
+        attempt.score = calculated_score
+        db.commit()
+        db.refresh(attempt)
+
+    return {
+        "id": attempt.id,
+        "attempt_id": attempt.id,
+        "user_id": attempt.user_id,
+        "quiz_id": quiz.id,
+        "quiz_title": quiz.title,
+        "score": calculated_score,
+        "total_marks": total_marks,
+        "correct_answers": correct_answers,
+        "incorrect_answers": incorrect_answers,
+        "unanswered": unanswered,
+        "total_questions": total_questions,
+        "percentage": percentage,
+        "passing_percentage": passing_percentage,
+        "result": result,
+        "status": status,
+        "created_at": attempt.created_at,
+        "questions": question_reviews,
+    }
+
+
+def submit_quiz_attempt(
+    db: Session,
+    attempt_id: int,
+    user_id: int,
+):
+    attempt = _get_attempt_for_user(
+        db=db,
+        attempt_id=attempt_id,
+        user_id=user_id,
+    )
+
+    if not attempt:
+        return None
+
+    return _build_quiz_result(
+        db=db,
+        attempt=attempt,
+    )
+
+
+def get_quiz_result(
+    db: Session,
+    attempt_id: int,
+    user_id: int,
+):
+    attempt = _get_attempt_for_user(
+        db=db,
+        attempt_id=attempt_id,
+        user_id=user_id,
+    )
+
+    if not attempt:
+        return None
+
+    return _build_quiz_result(
+        db=db,
+        attempt=attempt,
+    )
+
+
+def get_quiz_review(
+    db: Session,
+    attempt_id: int,
+    user_id: int,
+):
+    attempt = _get_attempt_for_user(
+        db=db,
+        attempt_id=attempt_id,
+        user_id=user_id,
+    )
+
+    if not attempt:
+        return None
+
+    quiz = _get_quiz(
+        db=db,
+        quiz_id=attempt.quiz_id,
+    )
+
+    if not quiz:
+        return None
+
+    questions = _get_questions(
+        db=db,
+        quiz_id=quiz.id,
+    )
+
+    answers = _get_answers(
+        db=db,
+        attempt_id=attempt.id,
+    )
+
+    (
+        review,
+        correct_answers,
+        incorrect_answers,
+        unanswered,
+        score,
+    ) = _build_question_review(
+        questions=questions,
+        answers=answers,
+    )
+
+    total_marks = sum(
+        int(question.marks or 0)
+        for question in questions
+    )
+
+    if total_marks <= 0:
+        total_marks = int(
+            quiz.total_marks or 0
+        )
+
+    if total_marks > 0:
+        percentage = round(
+            (
+                float(score)
+                / float(total_marks)
+            )
+            * 100,
+            2,
+        )
+    else:
+        percentage = 0.0
+
+    passing_percentage = float(
+        quiz.passing_percentage
+        if quiz.passing_percentage is not None
+        else 50
+    )
+
+    if len(questions) == 0:
+        result = "NO_QUESTIONS"
+    elif total_marks <= 0:
+        result = "NO_MARKS"
+    elif percentage >= passing_percentage:
+        result = "PASS"
+    else:
+        result = "FAIL"
+
     return {
         "attempt_id": attempt.id,
-
         "quiz_id": quiz.id,
-
         "quiz_title": quiz.title,
-
-        "passing_percentage": float(
-            quiz.passing_percentage or 0
-        ),
-
+        "score": score,
+        "total_marks": total_marks,
+        "correct_answers": correct_answers,
+        "incorrect_answers": incorrect_answers,
+        "unanswered": unanswered,
+        "total_questions": len(questions),
+        "percentage": percentage,
+        "passing_percentage": passing_percentage,
+        "result": result,
         "questions": review,
     }

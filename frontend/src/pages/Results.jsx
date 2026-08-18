@@ -41,7 +41,7 @@ function Results() {
               console.error(
                 `Unable to load result for attempt ${attempt.id}:`,
                 err
-              );
+              );  
 
               return null;
             }
@@ -61,7 +61,7 @@ function Results() {
 
         setError(
           err.message ||
-            "Unable to load your quiz results."
+          "Unable to load your quiz results."
         );
       } finally {
         setLoading(false);
@@ -331,11 +331,10 @@ function Results() {
                         <td className="px-6 py-5">
 
                           <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
-                              passed
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${passed
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                              }`}
                           >
                             {passed
                               ? "PASS"
@@ -358,9 +357,12 @@ function Results() {
 
                           <button
                             onClick={() =>
-                              navigate(
-                                `/quiz/${result.quiz_id}/result/${result.attempt_id}`
-                              )
+                              // navigate(
+                              //   `/quiz/${result.quiz_id}/result/${result.attempt_id}`
+                              // )
+
+
+                              navigate(`/certificate/${result.attempt_id}`)
                             }
                             className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                           >
@@ -376,7 +378,6 @@ function Results() {
                 </tbody>
 
               </table>
-
             </div>
 
           </div>

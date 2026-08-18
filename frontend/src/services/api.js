@@ -2,29 +2,44 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api/v1`
   : "http://127.0.0.1:8000/api/v1";
 
+
+
+// AUTH / TOKEN HELPERS
+
+
 function getToken() {
   return localStorage.getItem("access_token");
 }
 
+
 function authHeaders() {
   const token = getToken();
 
-  return token
-    ? {
-        Authorization: `Bearer ${token}`,
-      }
-    : {};
+  if (!token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
 }
+
+
+
+// RESPONSE HANDLER
+
 
 async function handleResponse(response) {
   const contentType =
     response.headers.get("content-type") || "";
 
+  // Unauthorized
   if (response.status === 401) {
     localStorage.removeItem("access_token");
     localStorage.removeItem("user");
   }
 
+  // Error response
   if (!response.ok) {
     let data = null;
 
@@ -88,10 +103,12 @@ async function handleResponse(response) {
     throw error;
   }
 
+  // PDF response
   if (contentType.includes("application/pdf")) {
     return response.blob();
   }
 
+  // No content
   if (response.status === 204) {
     return null;
   }
@@ -103,17 +120,27 @@ async function handleResponse(response) {
   }
 }
 
-export async function apiRequest(endpoint, options = {}) {
+
+
+// GENERIC API REQUEST
+
+
+export async function apiRequest(
+  endpoint,
+  options = {}
+) {
   const isFormData =
     options.body instanceof FormData;
 
   const headers = {
     ...authHeaders(),
+
     ...(isFormData
       ? {}
       : {
           "Content-Type": "application/json",
         }),
+
     ...(options.headers || {}),
   };
 
@@ -128,7 +155,15 @@ export async function apiRequest(endpoint, options = {}) {
   return handleResponse(response);
 }
 
-export async function loginUser(email, password) {
+
+
+// AUTH
+
+
+export async function loginUser(
+  email,
+  password
+) {
   const formData = new URLSearchParams();
 
   formData.append("username", email);
@@ -148,6 +183,7 @@ export async function loginUser(email, password) {
 
   return handleResponse(response);
 }
+
 
 export async function registerUser(
   fullName,
@@ -172,6 +208,11 @@ export async function registerUser(
   return handleResponse(response);
 }
 
+
+
+// QUIZZES
+
+
 export async function getQuizzes() {
   const response = await fetch(
     `${API_BASE_URL}/quizzes/`,
@@ -183,6 +224,7 @@ export async function getQuizzes() {
 
   return handleResponse(response);
 }
+
 
 export async function createQuiz(quizData) {
   const response = await fetch(
@@ -197,7 +239,9 @@ export async function createQuiz(quizData) {
         title: quizData.title,
         description: quizData.description,
         duration: Number(quizData.duration),
-        total_marks: Number(quizData.total_marks),
+        total_marks: Number(
+          quizData.total_marks
+        ),
         passing_percentage: Number(
           quizData.passing_percentage
         ),
@@ -211,6 +255,7 @@ export async function createQuiz(quizData) {
 
   return handleResponse(response);
 }
+
 
 export async function updateQuiz(
   quizId,
@@ -228,7 +273,9 @@ export async function updateQuiz(
         title: quizData.title,
         description: quizData.description,
         duration: Number(quizData.duration),
-        total_marks: Number(quizData.total_marks),
+        total_marks: Number(
+          quizData.total_marks
+        ),
         passing_percentage: Number(
           quizData.passing_percentage
         ),
@@ -243,6 +290,7 @@ export async function updateQuiz(
   return handleResponse(response);
 }
 
+
 export async function deleteQuiz(quizId) {
   const response = await fetch(
     `${API_BASE_URL}/quizzes/${quizId}`,
@@ -254,6 +302,11 @@ export async function deleteQuiz(quizId) {
 
   return handleResponse(response);
 }
+
+
+
+// STUDENTS
+
 
 export async function getStudents() {
   const response = await fetch(
@@ -267,7 +320,10 @@ export async function getStudents() {
   return handleResponse(response);
 }
 
-export async function getStudentDetails(studentId) {
+
+export async function getStudentDetails(
+  studentId
+) {
   const response = await fetch(
     `${API_BASE_URL}/students/${studentId}`,
     {
@@ -279,7 +335,10 @@ export async function getStudentDetails(studentId) {
   return handleResponse(response);
 }
 
-export async function getStudentAttempts(studentId) {
+
+export async function getStudentAttempts(
+  studentId
+) {
   const response = await fetch(
     `${API_BASE_URL}/students/${studentId}/attempts`,
     {
@@ -290,6 +349,11 @@ export async function getStudentAttempts(studentId) {
 
   return handleResponse(response);
 }
+
+
+
+// QUESTIONS
+
 
 export async function getQuestionsByQuiz(
   quizId
@@ -305,9 +369,15 @@ export async function getQuestionsByQuiz(
   return handleResponse(response);
 }
 
+
 export async function getQuestions(quizId) {
   return getQuestionsByQuiz(quizId);
 }
+
+
+
+// QUIZ ATTEMPTS
+
 
 export async function startQuiz(quizId) {
   const response = await fetch(
@@ -327,13 +397,17 @@ export async function startQuiz(quizId) {
   return handleResponse(response);
 }
 
+
 export async function startQuizAttempt(
   quizId
 ) {
   return startQuiz(quizId);
 }
 
-export async function submitQuiz(attemptId) {
+
+export async function submitQuiz(
+  attemptId
+) {
   const response = await fetch(
     `${API_BASE_URL}/attempts/${attemptId}/submit`,
     {
@@ -345,11 +419,13 @@ export async function submitQuiz(attemptId) {
   return handleResponse(response);
 }
 
+
 export async function submitQuizAttempt(
   attemptId
 ) {
   return submitQuiz(attemptId);
 }
+
 
 export async function getMyAttempts() {
   const response = await fetch(
@@ -363,6 +439,11 @@ export async function getMyAttempts() {
   return handleResponse(response);
 }
 
+
+
+// ANSWERS
+
+
 export async function submitAnswer(
   attemptId,
   questionId,
@@ -371,7 +452,9 @@ export async function submitAnswer(
   const body = {
     attempt_id: Number(attemptId),
     question_id: Number(questionId),
-    selected_answer: String(selectedAnswer)
+    selected_answer: String(
+      selectedAnswer
+    )
       .trim()
       .toUpperCase(),
   };
@@ -391,37 +474,69 @@ export async function submitAnswer(
   return handleResponse(response);
 }
 
+
+
+// QUIZ RESULTS
+
+
 export async function getQuizResult(
   attemptId
 ) {
+  const id = Number(attemptId);
+
+  if (!Number.isFinite(id)) {
+    throw new Error(
+      "Invalid quiz attempt ID."
+    );
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/results/${attemptId}`,
+    `${API_BASE_URL}/results/${id}`,
     {
       method: "GET",
-      headers: authHeaders(),
+      headers: {
+        ...authHeaders(),
+      },
     }
   );
 
   return handleResponse(response);
 }
+
 
 export async function getQuizReview(
   attemptId
 ) {
+  const id = Number(attemptId);
+
+  if (!Number.isFinite(id)) {
+    throw new Error(
+      "Invalid quiz attempt ID."
+    );
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/results/${attemptId}/review`,
+    `${API_BASE_URL}/results/${id}/review`,
     {
       method: "GET",
-      headers: authHeaders(),
+      headers: {
+        ...authHeaders(),
+      },
     }
   );
 
   return handleResponse(response);
 }
 
+
 export async function getResult(attemptId) {
   return getQuizResult(attemptId);
 }
+
+
+
+// GET ALL QUIZ RESULTS
+
 
 export async function getAllQuizResults() {
   const response = await fetch(
@@ -435,6 +550,30 @@ export async function getAllQuizResults() {
   return handleResponse(response);
 }
 
+
+
+
+// GET ALL QUIZ RESULTS - ADMIN
+
+export async function getAllQuizResultAdmin() {
+  const response = await fetch(
+    `${API_BASE_URL}/results/`,
+    {
+      method: "GET",
+      headers: {
+        ...authHeaders(),
+      },
+    }
+  );
+
+  return handleResponse(response);
+}
+
+
+
+// CERTIFICATES
+
+
 export async function getCertificates() {
   const response = await fetch(
     `${API_BASE_URL}/certificates`,
@@ -446,6 +585,7 @@ export async function getCertificates() {
 
   return handleResponse(response);
 }
+
 
 export async function getCertificate(
   attemptId
@@ -461,14 +601,29 @@ export async function getCertificate(
   return handleResponse(response);
 }
 
+
+
+// DOWNLOAD CERTIFICATE
+
+
 export async function downloadCertificate(
   attemptId
 ) {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error(
+      "Your login session has expired. Please login again."
+    );
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/certificate/${attemptId}/download`,
+    `${API_BASE_URL}/certificates/${attemptId}/download`,
     {
       method: "GET",
-      headers: authHeaders(),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 

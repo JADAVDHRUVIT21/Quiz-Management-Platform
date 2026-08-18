@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllQuizResults } from "../../services/api";
+import { getAllQuizResultAdmin } from "../../services/api";
 
-function QuizResults() {
+function QuizResultAdmin() {
   const navigate = useNavigate();
 
   const [results, setResults] = useState([]);
@@ -18,7 +18,7 @@ function QuizResults() {
       setLoading(true);
       setError("");
 
-      const response = await getAllQuizResults();
+      const response = await getAllQuizResultAdmin();
 
       const data =
         response?.results ||
@@ -33,8 +33,8 @@ function QuizResults() {
 
       setError(
         err?.response?.data?.detail ||
-          err?.message ||
-          "Unable to load quiz results."
+        err?.message ||
+        "Unable to load quiz results."
       );
     } finally {
       setLoading(false);
@@ -78,17 +78,17 @@ function QuizResults() {
 
     const score = Number(
       result?.score ??
-        result?.marks_obtained ??
-        result?.obtained_marks ??
-        0
+      result?.marks_obtained ??
+      result?.obtained_marks ??
+      0
     );
 
     const totalMarks = Number(
       result?.total_marks ??
-        result?.max_marks ??
-        result?.quiz_total_marks ??
-        result?.quiz?.total_marks ??
-        0
+      result?.max_marks ??
+      result?.quiz_total_marks ??
+      result?.quiz?.total_marks ??
+      0
     );
 
     if (totalMarks > 0) {
@@ -101,8 +101,8 @@ function QuizResults() {
   const getStatus = (result) => {
     const status = String(
       result?.result ||
-        result?.status ||
-        ""
+      result?.status ||
+      ""
     ).toUpperCase();
 
     if (
@@ -458,7 +458,6 @@ function QuizResults() {
                     </th>
                   </tr>
                 </thead>
-
                 <tbody className="divide-y divide-slate-100">
                   {results.map((result, index) => {
                     const status = getStatus(result);
@@ -541,8 +540,8 @@ function QuizResults() {
                         <td className="whitespace-nowrap px-6 py-5 text-sm text-slate-500">
                           {formatDate(
                             result?.created_at ??
-                              result?.submitted_at ??
-                              result?.completed_at
+                            result?.submitted_at ??
+                            result?.completed_at
                           )}
                         </td>
                       </tr>
@@ -558,4 +557,4 @@ function QuizResults() {
   );
 }
 
-export default QuizResults;
+export default QuizResultAdmin;
