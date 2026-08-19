@@ -8,13 +8,15 @@ function Certificate() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [downloadingId, setDownloadingId] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadFileName, setDownloadFileName] = useState("");
+  const [downloadController, setDownloadController] = useState(null);
 
   const API_URL =
     import.meta.env.VITE_API_URL ||
     "http://127.0.0.1:8000";
-
-  // LOAD ALL PASSED CERTIFICATES
 
   const loadCertificates = async () => {
     try {
@@ -41,10 +43,7 @@ function Certificate() {
 
       setData(response.data);
     } catch (err) {
-      console.error(
-        "Certificate loading error:",
-        err
-      );
+      console.error("Certificate loading error:", err);
 
       if (err?.response?.status === 401) {
         localStorage.removeItem("access_token");
@@ -75,13 +74,8 @@ function Certificate() {
     loadCertificates();
   }, []);
 
-  // DOWNLOAD CERTIFICATE FOR ANY PASSED ATTEMPT
-
-  const handleDownloadCertificate = async (
-    certificate
-  ) => {
-    const attemptId =
-      certificate?.attempt_id;
+  const handleDownloadCertificate = async (certificate) => {
+    const attemptId = certificate?.attempt_id;
 
     if (!attemptId) {
       setError(
@@ -104,20 +98,62 @@ function Certificate() {
       return;
     }
 
+    const quizTitle =
+      certificate?.quiz?.title ||
+      "quiz";
+
+    const safeQuizTitle =
+      quizTitle
+        .replace(/[^a-z0-9]/gi, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "");
+
+    const fileName =
+      `certificate_${safeQuizTitle}_${attemptId}.pdf`;
+
+    const controller = new AbortController();
+
     try {
       setError("");
       setDownloadingId(attemptId);
+      setDownloadProgress(0);
+      setDownloadFileName(fileName);
+      setDownloadController(controller);
 
-      const response =
-        await axios.get(
-          `${API_URL}/api/v1/certificates/${attemptId}/download`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            responseType: "blob",
-          }
-        );
+      const response = await axios.get(
+        `${API_URL}/api/v1/certificates/${attemptId}/download`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+          signal: controller.signal,
+          onDownloadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percentage = Math.round(
+                (progressEvent.loaded /
+                  progressEvent.total) *
+                  100
+              );
+
+              setDownloadProgress(
+                Math.min(100, Math.max(0, percentage))
+              );
+            } else {
+              setDownloadProgress((current) => {
+                if (current >= 95) {
+                  return current;
+                }
+
+                return Math.min(
+                  95,
+                  current + 5
+                );
+              });
+            }
+          },
+        }
+      );
 
       if (response.status !== 200) {
         throw new Error(
@@ -125,7 +161,7 @@ function Certificate() {
         );
       }
 
-      // CREATE PDF BLOB
+      setDownloadProgress(100);
 
       const contentType =
         response.headers["content-type"] ||
@@ -138,8 +174,6 @@ function Certificate() {
         }
       );
 
-      // CREATE DOWNLOAD LINK
-
       const url =
         window.URL.createObjectURL(blob);
 
@@ -147,19 +181,7 @@ function Certificate() {
         document.createElement("a");
 
       link.href = url;
-
-      const quizTitle =
-        certificate?.quiz?.title ||
-        "quiz";
-
-      const safeQuizTitle =
-        quizTitle
-          .replace(/[^a-z0-9]/gi, "_")
-          .replace(/_+/g, "_")
-          .replace(/^_|_$/g, "");
-
-      link.download =
-        `certificate_${safeQuizTitle}_${attemptId}.pdf`;
+      link.download = fileName;
 
       document.body.appendChild(link);
 
@@ -169,12 +191,21 @@ function Certificate() {
 
       window.URL.revokeObjectURL(url);
     } catch (err) {
+      if (
+        err?.code === "ERR_CANCELED" ||
+        err?.name === "CanceledError" ||
+        controller.signal.aborted
+      ) {
+        setError(
+          "Certificate download was cancelled."
+        );
+        return;
+      }
+
       console.error(
         "Certificate download error:",
         err
       );
-
-      // AXIOS BLOB ERROR HANDLING
 
       let backendMessage = "";
 
@@ -212,8 +243,6 @@ function Certificate() {
         }
       }
 
-      // 401
-
       if (
         err?.response?.status === 401
       ) {
@@ -230,8 +259,6 @@ function Certificate() {
         return;
       }
 
-      // 403
-
       if (
         err?.response?.status === 403
       ) {
@@ -242,8 +269,6 @@ function Certificate() {
 
         return;
       }
-
-      // 404
 
       if (
         err?.response?.status === 404
@@ -262,10 +287,20 @@ function Certificate() {
       );
     } finally {
       setDownloadingId(null);
+      setDownloadController(null);
+
+      setTimeout(() => {
+        setDownloadProgress(0);
+        setDownloadFileName("");
+      }, 800);
     }
   };
 
-  // LOADING
+  const handleCancelDownload = () => {
+    if (downloadController) {
+      downloadController.abort();
+    }
+  };
 
   if (loading) {
     return (
@@ -302,8 +337,6 @@ function Certificate() {
       </div>
     );
   }
-
-  // ERROR
 
   if (error && !data) {
     return (
@@ -368,18 +401,106 @@ function Certificate() {
   const certificates =
     data?.certificates || [];
 
-  // PAGE
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* NAVBAR */}
+
+      {downloadingId !== null && (
+        <div className="fixed right-5 top-5 z-[9999] w-[380px] max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+          <div className="flex items-start justify-between gap-4">
+
+            <div className="flex min-w-0 items-center gap-4">
+
+              <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
+
+                <svg
+                  className="h-14 w-14 -rotate-90"
+                  viewBox="0 0 56 56"
+                >
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="23"
+                    fill="none"
+                    stroke="#e2e8f0"
+                    strokeWidth="5"
+                  />
+
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="23"
+                    fill="none"
+                    stroke="#2563eb"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeDasharray="144.5"
+                    strokeDashoffset={
+                      144.5 -
+                      (144.5 *
+                        downloadProgress) /
+                        100
+                    }
+                    className="transition-all duration-300"
+                  />
+                </svg>
+
+                <span className="absolute text-xs font-bold text-slate-900">
+                  {downloadProgress}%
+                </span>
+
+              </div>
+
+              <div className="min-w-0">
+
+                <p className="text-sm font-bold text-slate-900">
+                  Downloading certificate
+                </p>
+
+                <p className="mt-1 truncate text-xs text-slate-500">
+                  {downloadFileName}
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCancelDownload}
+              className="shrink-0 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+
+          </div>
+
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+
+            <div
+              className="h-full rounded-full bg-blue-600 transition-all duration-300"
+              style={{
+                width: `${downloadProgress}%`,
+              }}
+            />
+
+          </div>
+
+          
+
+        </div>
+      )}
+
       <nav className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+
           <div className="flex min-w-0 items-center gap-3">
+
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white">
               Q
             </div>
 
             <div className="min-w-0">
+
               <h1 className="truncate font-bold text-slate-900">
                 QuizMaster
               </h1>
@@ -387,7 +508,9 @@ function Certificate() {
               <p className="text-xs text-slate-500">
                 My Certificates
               </p>
+
             </div>
+
           </div>
 
           <button
@@ -399,12 +522,14 @@ function Certificate() {
           >
             Dashboard
           </button>
+
         </div>
       </nav>
 
-      {/* MAIN */}
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+
         <div className="mb-8">
+
           <span className="inline-flex rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600">
             Achievement Center
           </span>
@@ -414,15 +539,14 @@ function Certificate() {
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
-            Every quiz you pass is eligible for
-            a certificate. You can download
-            each certificate separately.
+            Every quiz you pass is eligible for a certificate. You can download each certificate separately.
           </p>
+
         </div>
 
-        {/* ERROR MESSAGE */}
         {error && (
           <div className="mb-6 flex items-start justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+
             <p>{error}</p>
 
             <button
@@ -432,12 +556,14 @@ function Certificate() {
             >
               ×
             </button>
+
           </div>
         )}
 
-        {/* NO CERTIFICATES */}
         {certificates.length === 0 ? (
+
           <div className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-4xl">
               🏆
             </div>
@@ -447,8 +573,7 @@ function Certificate() {
             </h3>
 
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-500">
-              Pass a quiz to unlock your
-              certificate.
+              Pass a quiz to unlock your certificate.
             </p>
 
             <button
@@ -460,12 +585,16 @@ function Certificate() {
             >
               Browse Quizzes
             </button>
+
           </div>
+
         ) : (
-          /* CERTIFICATE GRID */
+
           <div className="grid gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+
             {certificates.map(
               (certificate) => {
+
                 const quizId =
                   certificate?.quiz?.id;
 
@@ -476,13 +605,40 @@ function Certificate() {
                   downloadingId ===
                   attemptId;
 
+                const score = Number(
+                  certificate?.result?.score ??
+                    0
+                );
+
+                const totalMarks = Number(
+                  certificate?.result
+                    ?.total_marks ?? 0
+                );
+
+                const calculatedPercentage =
+                  totalMarks > 0
+                    ? Math.round(
+                        (score /
+                          totalMarks) *
+                          100
+                      )
+                    : 0;
+
+                const passingPercentage =
+                  Number(
+                    certificate?.result
+                      ?.passing_percentage ??
+                      0
+                  );
+
                 return (
                   <div
                     key={attemptId}
                     className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:p-6"
                   >
-                    {/* HEADER */}
+
                     <div className="flex items-start justify-between gap-4">
+
                       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-3xl">
                         🏆
                       </div>
@@ -490,10 +646,11 @@ function Certificate() {
                       <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
                         PASSED
                       </span>
+
                     </div>
 
-                    {/* CONTENT */}
                     <div className="mt-6 flex-1">
+
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                         Certificate
                       </p>
@@ -505,76 +662,69 @@ function Certificate() {
                       </h3>
 
                       <div className="mt-5 grid grid-cols-2 gap-3">
+
                         <div className="rounded-xl bg-slate-50 p-3">
+
                           <p className="text-xs text-slate-500">
                             Score
                           </p>
 
                           <p className="mt-1 text-lg font-extrabold text-slate-900">
-                            {
-                              certificate
-                                ?.result
-                                ?.score
-                            }
-                            /
-                            {
-                              certificate
-                                ?.result
-                                ?.total_marks
-                            }
+                            {score}/{totalMarks}
                           </p>
+
                         </div>
 
                         <div className="rounded-xl bg-slate-50 p-3">
+
                           <p className="text-xs text-slate-500">
                             Percentage
                           </p>
 
                           <p className="mt-1 text-lg font-extrabold text-green-600">
-                            {
-                              certificate
-                                ?.result
-                                ?.percentage
-                            }
-                            %
+                            {calculatedPercentage}%
                           </p>
+
                         </div>
+
                       </div>
 
                       <p className="mt-4 text-xs text-slate-500">
+
                         Passing percentage:{" "}
+
                         <span className="font-semibold text-slate-700">
-                          {
-                            certificate
-                              ?.result
-                              ?.passing_percentage
-                          }
-                          %
+                          {passingPercentage}%
                         </span>
+
                       </p>
 
                       <p className="mt-2 text-xs text-slate-500">
+
                         Passed on{" "}
+
                         <span className="font-semibold text-slate-700">
                           {certificate?.date ||
                             "—"}
                         </span>
+
                       </p>
 
                       <p className="mt-2 text-xs text-slate-400">
+
                         Attempt ID:{" "}
+
                         {attemptId}
+
                       </p>
+
                     </div>
 
-                    {/* BUTTONS */}
                     <div className="mt-7 space-y-3">
-                      {/* DOWNLOAD */}
+
                       <button
                         type="button"
-                        disabled={
-                          isDownloading
-                        }
+                        disabled={isDownloading}
                         onClick={() =>
                           handleDownloadCertificate(
                             certificate
@@ -582,28 +732,27 @@ function Certificate() {
                         }
                         className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
+
                         {isDownloading ? (
                           <>
                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-
                             Downloading...
                           </>
                         ) : (
                           <>
-                            📥 Download
-                            Certificate
+                            📥 Download Certificate
                           </>
                         )}
+
                       </button>
 
-                      {/* VIEW RESULT */}
                       {quizId &&
                         attemptId && (
                           <button
                             type="button"
                             onClick={() =>
                               navigate(
-                                `/quiz/${quizId}/result/${attemptId}`
+                                `/certificates/${attemptId}`
                               )
                             }
                             className="w-full rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
@@ -611,14 +760,20 @@ function Certificate() {
                             View Result
                           </button>
                         )}
+
                     </div>
+
                   </div>
                 );
               }
             )}
+
           </div>
+
         )}
+
       </main>
+
     </div>
   );
 }

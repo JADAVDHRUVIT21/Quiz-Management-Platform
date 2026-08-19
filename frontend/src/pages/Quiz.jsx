@@ -310,7 +310,7 @@ function Quiz() {
       }
 
       navigate(
-        `/quiz/${quizId}/result/${attempt.id}`
+        `/certificates/${attempt.id}`
       );
     } catch (err) {
       console.error(

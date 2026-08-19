@@ -11,8 +11,9 @@ function CreateQuiz() {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    duration: 30,
-    passing_percentage: 50,
+    duration: "",
+    total_marks: "",
+    passing_percentage: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -31,7 +32,6 @@ function CreateQuiz() {
       [name]: value,
     }));
   };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -54,15 +54,26 @@ function CreateQuiz() {
     }
 
     const duration = Number(form.duration);
+
+    const totalMarks = Number(form.total_marks);
+
     const passingPercentage = Number(
       form.passing_percentage
     );
 
+    // Validate duration
     if (!Number.isFinite(duration) || duration <= 0) {
       setError("Duration must be greater than 0 minutes.");
       return;
     }
 
+    // Validate total marks
+    if (!Number.isFinite(totalMarks) || totalMarks <= 0) {
+      setError("Total marks must be greater than 0.");
+      return;
+    }
+
+    // Validate passing percentage
     if (
       !Number.isFinite(passingPercentage) ||
       passingPercentage < 0 ||
@@ -89,7 +100,7 @@ function CreateQuiz() {
             title: form.title.trim(),
             description: form.description.trim() || null,
             duration: duration,
-            total_marks: 0,
+            total_marks: totalMarks,
             passing_percentage: passingPercentage,
             is_active: true,
           }),
@@ -112,7 +123,7 @@ function CreateQuiz() {
         if (response.status === 403) {
           throw new Error(
             data?.detail ||
-              "You do not have admin permission."
+            "You do not have admin permission."
           );
         }
 
@@ -142,8 +153,8 @@ function CreateQuiz() {
 
         throw new Error(
           data?.detail ||
-            data?.message ||
-            "Unable to create quiz."
+          data?.message ||
+          "Unable to create quiz."
         );
       }
 
@@ -153,11 +164,12 @@ function CreateQuiz() {
         title: "",
         description: "",
         duration: 30,
+        total_marks: 100,
         passing_percentage: 50,
       });
 
       setTimeout(() => {
-        navigate("/admin");
+        navigate("/dashboard");
       }, 1000);
     } catch (err) {
       setError(
@@ -167,7 +179,6 @@ function CreateQuiz() {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-slate-50">
       <nav className="border-b border-slate-200 bg-white">
@@ -297,6 +308,33 @@ function CreateQuiz() {
 
             <div>
               <label
+                htmlFor="total_marks"
+                className="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Total Marks
+              </label>
+
+              <div className="relative">
+                <input
+                  id="total_marks"
+                  name="total_marks"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={form.total_marks}
+                  onChange={handleChange}
+                  placeholder="Enter total marks"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-16 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
+                  marks
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label
                 htmlFor="passing_percentage"
                 className="mb-2 block text-sm font-semibold text-slate-700"
               >
@@ -336,7 +374,7 @@ function CreateQuiz() {
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() => navigate("/admin")}
+                onClick={() => navigate("/dashboard")}
                 className="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
               >
                 Cancel

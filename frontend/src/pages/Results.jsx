@@ -362,7 +362,7 @@ function Results() {
                               // )
 
 
-                              navigate(`/certificate/${result.attempt_id}`)
+                              navigate(`/certificates/${result.attempt_id}`)
                             }
                             className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                           >

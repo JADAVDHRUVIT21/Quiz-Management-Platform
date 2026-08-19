@@ -5,6 +5,7 @@ from app.schemas.quiz import QuizCreate
 
 
 def create_quiz(db: Session, quiz: QuizCreate):
+    print("quiz.total_marks", quiz.total_marks)
     db_quiz = Quiz(
         title=quiz.title,
         description=quiz.description,

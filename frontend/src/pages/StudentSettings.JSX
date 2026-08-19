@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  getCurrentUser,
+  updateMyProfile,
+  changeMyPassword,
+} from "../services/api";
 
 function StudentSettings() {
   const navigate = useNavigate();
@@ -15,6 +20,9 @@ function StudentSettings() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
 
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
 
   const [passwordData, setPasswordData] = useState({
@@ -24,19 +32,58 @@ function StudentSettings() {
   });
 
   useEffect(() => {
-    const storedUser = JSON.parse(
-      localStorage.getItem("user") || "null"
-    );
+    const token = localStorage.getItem("access_token");
 
-    if (!storedUser) {
+    if (!token) {
       navigate("/login", { replace: true });
       return;
     }
 
-    setUser(storedUser);
-    setFullName(storedUser.full_name || "");
-    setEmail(storedUser.email || "");
+    loadUser();
+    loadPreferences();
+  }, [navigate]);
 
+  const loadUser = async () => {
+    try {
+      const storedUser = JSON.parse(
+        localStorage.getItem("user") || "null"
+      );
+
+      if (storedUser) {
+        setUser(storedUser);
+        setFullName(storedUser.full_name || "");
+        setEmail(storedUser.email || "");
+      }
+
+      const currentUser = await getCurrentUser();
+
+      if (currentUser) {
+        setUser(currentUser);
+        setFullName(currentUser.full_name || "");
+        setEmail(currentUser.email || "");
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(currentUser)
+        );
+      }
+    } catch (error) {
+      if (error?.status === 401) {
+        handleLogout();
+        return;
+      }
+
+      const storedUser = JSON.parse(
+        localStorage.getItem("user") || "null"
+      );
+
+      if (!storedUser) {
+        navigate("/login", { replace: true });
+      }
+    }
+  };
+
+  const loadPreferences = () => {
     const savedNotifications = localStorage.getItem(
       "student_notifications"
     );
@@ -47,7 +94,9 @@ function StudentSettings() {
 
     if (savedNotifications !== null) {
       try {
-        setNotifications(JSON.parse(savedNotifications));
+        setNotifications(
+          JSON.parse(savedNotifications)
+        );
       } catch {
         setNotifications(true);
       }
@@ -55,58 +104,93 @@ function StudentSettings() {
 
     if (savedQuizReminders !== null) {
       try {
-        setQuizReminders(JSON.parse(savedQuizReminders));
+        setQuizReminders(
+          JSON.parse(savedQuizReminders)
+        );
       } catch {
         setQuizReminders(true);
       }
     }
-  }, [navigate]);
+  };
 
-  const handleProfileSave = (e) => {
+  const handleProfileSave = async (e) => {
     e.preventDefault();
 
     setMessage("");
     setMessageType("");
 
-    if (!fullName.trim()) {
+    const trimmedName = fullName.trim();
+
+    if (!trimmedName) {
       setMessage("Full name is required.");
       setMessageType("error");
       return;
     }
 
-    const updatedUser = {
-      ...user,
-      full_name: fullName.trim(),
-    };
+    try {
+      setProfileLoading(true);
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify(updatedUser)
-    );
+      const updatedUser = await updateMyProfile(
+        trimmedName
+      );
 
-    setUser(updatedUser);
+      setUser(updatedUser);
+      setFullName(updatedUser.full_name || "");
+      setEmail(updatedUser.email || "");
 
-    setMessage("Profile updated successfully.");
-    setMessageType("success");
+      localStorage.setItem(
+        "user",
+        JSON.stringify(updatedUser)
+      );
+
+      setMessage(
+        "Profile updated successfully."
+      );
+      setMessageType("success");
+    } catch (error) {
+      if (error?.status === 401) {
+        handleLogout();
+        return;
+      }
+
+      setMessage(
+        error?.message ||
+          "Unable to update profile."
+      );
+      setMessageType("error");
+    } finally {
+      setProfileLoading(false);
+    }
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
 
     setMessage("");
     setMessageType("");
 
+    const currentPassword =
+      passwordData.currentPassword;
+
+    const newPassword =
+      passwordData.newPassword;
+
+    const confirmPassword =
+      passwordData.confirmPassword;
+
     if (
-      !passwordData.currentPassword ||
-      !passwordData.newPassword ||
-      !passwordData.confirmPassword
+      !currentPassword ||
+      !newPassword ||
+      !confirmPassword
     ) {
-      setMessage("Please fill all password fields.");
+      setMessage(
+        "Please fill all password fields."
+      );
       setMessageType("error");
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
+    if (newPassword.length < 6) {
       setMessage(
         "New password must contain at least 6 characters."
       );
@@ -114,25 +198,47 @@ function StudentSettings() {
       return;
     }
 
-    if (
-      passwordData.newPassword !==
-      passwordData.confirmPassword
-    ) {
-      setMessage("New passwords do not match.");
+    if (newPassword !== confirmPassword) {
+      setMessage(
+        "New passwords do not match."
+      );
       setMessageType("error");
       return;
     }
 
-    setMessage(
-      "Password validation completed successfully."
-    );
-    setMessageType("success");
+    try {
+      setPasswordLoading(true);
 
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+      const result = await changeMyPassword(
+        currentPassword,
+        newPassword
+      );
+
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setMessage(
+        result?.message ||
+          "Password changed successfully."
+      );
+      setMessageType("success");
+    } catch (error) {
+      if (error?.status === 401) {
+        handleLogout();
+        return;
+      }
+
+      setMessage(
+        error?.message ||
+          "Unable to change password."
+      );
+      setMessageType("error");
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   const handlePreferencesSave = () => {
@@ -146,7 +252,9 @@ function StudentSettings() {
       JSON.stringify(quizReminders)
     );
 
-    setMessage("Preferences saved successfully.");
+    setMessage(
+      "Preferences saved successfully."
+    );
     setMessageType("success");
   };
 
@@ -157,6 +265,16 @@ function StudentSettings() {
     navigate("/login", {
       replace: true,
     });
+  };
+
+  const updatePasswordField = (
+    field,
+    value
+  ) => {
+    setPasswordData((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
   };
 
   if (!user) {
@@ -189,7 +307,9 @@ function StudentSettings() {
 
           <button
             type="button"
-            onClick={() => navigate("/dashboard")}
+            onClick={() =>
+              navigate("/dashboard")
+            }
             className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 sm:px-5 sm:py-2.5 sm:text-sm"
           >
             Back to Dashboard
@@ -266,7 +386,8 @@ function StudentSettings() {
                   onChange={(e) =>
                     setFullName(e.target.value)
                   }
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  disabled={profileLoading}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
                   placeholder="Enter your full name"
                 />
               </div>
@@ -290,9 +411,12 @@ function StudentSettings() {
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                disabled={profileLoading}
+                className="w-full rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Save Profile
+                {profileLoading
+                  ? "Saving..."
+                  : "Save Profile"}
               </button>
 
             </form>
@@ -329,15 +453,22 @@ function StudentSettings() {
                 </label>
 
                 <input
-                  type={showPassword ? "text" : "password"}
-                  value={passwordData.currentPassword}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      currentPassword: e.target.value,
-                    })
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
                   }
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  value={
+                    passwordData.currentPassword
+                  }
+                  onChange={(e) =>
+                    updatePasswordField(
+                      "currentPassword",
+                      e.target.value
+                    )
+                  }
+                  disabled={passwordLoading}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
                   placeholder="Enter current password"
                 />
               </div>
@@ -348,15 +479,22 @@ function StudentSettings() {
                 </label>
 
                 <input
-                  type={showPassword ? "text" : "password"}
-                  value={passwordData.newPassword}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      newPassword: e.target.value,
-                    })
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
                   }
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  value={
+                    passwordData.newPassword
+                  }
+                  onChange={(e) =>
+                    updatePasswordField(
+                      "newPassword",
+                      e.target.value
+                    )
+                  }
+                  disabled={passwordLoading}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
                   placeholder="Enter new password"
                 />
               </div>
@@ -367,15 +505,22 @@ function StudentSettings() {
                 </label>
 
                 <input
-                  type={showPassword ? "text" : "password"}
-                  value={passwordData.confirmPassword}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      confirmPassword: e.target.value,
-                    })
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
                   }
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  value={
+                    passwordData.confirmPassword
+                  }
+                  onChange={(e) =>
+                    updatePasswordField(
+                      "confirmPassword",
+                      e.target.value
+                    )
+                  }
+                  disabled={passwordLoading}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"
                   placeholder="Confirm new password"
                 />
               </div>
@@ -386,7 +531,9 @@ function StudentSettings() {
                   type="checkbox"
                   checked={showPassword}
                   onChange={(e) =>
-                    setShowPassword(e.target.checked)
+                    setShowPassword(
+                      e.target.checked
+                    )
                   }
                   className="h-4 w-4 rounded border-slate-300 text-blue-600"
                 />
@@ -397,9 +544,12 @@ function StudentSettings() {
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-purple-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-700"
+                disabled={passwordLoading}
+                className="w-full rounded-lg bg-purple-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Change Password
+                {passwordLoading
+                  ? "Changing Password..."
+                  : "Change Password"}
               </button>
 
             </form>
@@ -442,7 +592,9 @@ function StudentSettings() {
                 <button
                   type="button"
                   onClick={() =>
-                    setNotifications(!notifications)
+                    setNotifications(
+                      !notifications
+                    )
                   }
                   className={`relative h-7 w-12 rounded-full transition ${
                     notifications
@@ -476,7 +628,9 @@ function StudentSettings() {
                 <button
                   type="button"
                   onClick={() =>
-                    setQuizReminders(!quizReminders)
+                    setQuizReminders(
+                      !quizReminders
+                    )
                   }
                   className={`relative h-7 w-12 rounded-full transition ${
                     quizReminders
@@ -497,7 +651,9 @@ function StudentSettings() {
 
               <button
                 type="button"
-                onClick={handlePreferencesSave}
+                onClick={
+                  handlePreferencesSave
+                }
                 className="w-full rounded-lg bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
               >
                 Save Preferences
@@ -530,7 +686,9 @@ function StudentSettings() {
 
               <button
                 type="button"
-                onClick={() => navigate("/results")}
+                onClick={() =>
+                  navigate("/results")
+                }
                 className="rounded-xl border border-slate-200 p-5 text-left transition hover:border-blue-300 hover:bg-blue-50"
               >
                 <p className="text-2xl">

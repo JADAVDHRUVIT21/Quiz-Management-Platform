@@ -702,3 +702,30 @@ export async function downloadCertificate(
 
   return true;
 }
+export async function getCurrentUser() {
+  return apiRequest("/auth/me", {
+    method: "GET",
+  });
+}
+
+export async function updateMyProfile(fullName) {
+  return apiRequest("/auth/me", {
+    method: "PUT",
+    body: JSON.stringify({
+      full_name: fullName,
+    }),
+  });
+}
+
+export async function changeMyPassword(
+  currentPassword,
+  newPassword
+) {
+  return apiRequest("/auth/change-password", {
+    method: "PUT",
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+}
