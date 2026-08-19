@@ -8,7 +8,7 @@ const API_BASE_URL = (() => {
     return `${configuredUrl.replace(/\/$/, "")}/api/v1`;
   }
 
-  return "import.meta.env.VITE_BACKEND_URL";
+  return "import.meta.env.VITE_API_URL";
 })();
 
 function Login() {

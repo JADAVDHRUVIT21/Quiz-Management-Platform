@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api/v1`
-  : "import.meta.env.VITE_BACKEND_URL";
+  : "import.meta.env.VITE_API_URL";
 
 function Register() {
   const navigate = useNavigate();
