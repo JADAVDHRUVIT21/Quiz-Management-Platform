@@ -11,24 +11,22 @@ from app.api.v1.endpoints.user import router as user_router
 from app.api.v1.endpoints.student import router as student_router
 from app.api.certificate import router as certificate_router
 
-
 app = FastAPI(
     title="Quiz Management Platform API",
     version="1.0.0"
 )
-
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://quiz-management-platform-psi.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 app.include_router(
     auth_router,
@@ -74,7 +72,6 @@ app.include_router(
     certificate_router,
     prefix="/api/v1"
 )
-
 
 @app.get("/")
 def root():
