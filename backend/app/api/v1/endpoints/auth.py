@@ -37,6 +37,7 @@ def register(
     user: UserCreate,
     db: Session = Depends(get_db)
 ):
+    print("user from router = ", user)
     existing_user = get_user_by_email(
         db,
         user.email

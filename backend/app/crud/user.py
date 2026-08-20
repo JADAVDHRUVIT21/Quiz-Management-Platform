@@ -41,11 +41,12 @@ def create_user(
     db: Session,
     user: UserCreate
 ):
+    print("User = , ", user)
     db_user = User(
         full_name=user.full_name,
         email=user.email,
         password=hash_password(user.password),
-        role="student"
+        role=user.role
     )
 
     db.add(db_user)
