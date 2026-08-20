@@ -8,7 +8,7 @@ const API_BASE_URL = (() => {
     return `${configuredUrl.replace(/\/$/, "")}/api/v1`;
   }
 
-  return "import.meta.env.VITE_API_URL";
+  return import.meta.env.VITE_API_URL;
 })();
 
 function Login() {
@@ -154,7 +154,7 @@ function Login() {
         throw new Error(
           "Login succeeded, but the server did not return an access token."
         );
-      }
+      } 
 
       /*
        * First try to get user from login response.
@@ -339,7 +339,7 @@ function Login() {
 
       setError(
         err?.message ||
-          "Unable to login. Please check your credentials."
+        "Unable to login. Please check your credentials."
       );
     } finally {
       setLoading(false);
@@ -388,11 +388,10 @@ function Login() {
                   onClick={() =>
                     handleModeChange("student")
                   }
-                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                    loginMode === "student"
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${loginMode === "student"
                       ? "border-blue-600 bg-blue-600 text-white shadow-sm"
                       : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                 >
                   Login as Student
                 </button>
@@ -403,11 +402,10 @@ function Login() {
                   onClick={() =>
                     handleModeChange("admin")
                   }
-                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                    loginMode === "admin"
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${loginMode === "admin"
                       ? "border-blue-600 bg-blue-600 text-white shadow-sm"
                       : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                 >
                   Login as Admin
                 </button>

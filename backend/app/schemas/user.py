@@ -6,14 +6,13 @@ from enum import Enum
 
 class UserRole(str, Enum):
     ADMIN = "admin"
-    USER = "user"
+    STUDENT = "student"
 
 class UserCreate(BaseModel):
     full_name: str
     email: EmailStr
     password: str
-    role: UserRole = UserRole.USER
-
+    role: UserRole = UserRole.STUDENT
 
 class UserLogin(BaseModel):
     email: EmailStr

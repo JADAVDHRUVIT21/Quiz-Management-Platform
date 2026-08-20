@@ -16,7 +16,7 @@ function Students() {
       setError("");
 
       const data = await getStudents();
-
+      console.log("data = ", data);
       const studentList = Array.isArray(data?.students)
         ? data.students
         : [];
